@@ -4,7 +4,7 @@ Download wetransfert content with nodeJS
 ## You can require the module like this
 
 ``` javascript 
-const { getInfo,  isValidWetransfertUrl} = require('../index');
+const { getInfo,  isValidWetransfertUrl} = require('node-wetransfert');
 ```  
 
 ## Get information about weTransfert url
