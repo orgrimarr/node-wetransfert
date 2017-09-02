@@ -46,7 +46,7 @@ getInfo('myWeTransfertURL')
         "previewable": false
       },
       {
-        ...
+        
       }
     ],
     "password_protected": false,

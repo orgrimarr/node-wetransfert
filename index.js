@@ -1,5 +1,5 @@
 exports.isValidWetransfertUrl       = require('./utils/utils').isValidWetransfertUrl;
-exports.getListOfFile               = require('./handler/getInfo').getListOfFile;
+exports.getInfo               = require('./handler/getInfo').getInfo;
 
 
 
