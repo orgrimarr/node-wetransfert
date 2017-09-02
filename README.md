@@ -1,6 +1,13 @@
 # node-wetransfert
 Download wetransfert content with nodeJS
 
+## Install
+``` javascript 
+npm install wetransfert
+or
+yarn add wetransfert
+```
+
 ## You can require the module like this
 
 ``` javascript 
