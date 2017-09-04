@@ -73,3 +73,10 @@ getInfo('myWeTransfertURL')
 
 Return a nodeJS URL object if the url is valid
 If not, it return false
+
+
+## To do
+
+- improve error handling
+- easy download with zip decompression
+- upload
