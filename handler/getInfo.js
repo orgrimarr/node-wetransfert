@@ -48,7 +48,7 @@ const getContentInfo = function(urlObj){
             return resolve(content);
         })
         .catch((err) => {
-            return reject(err);
+            return reject(err.error);
         })
     });
 }
@@ -72,7 +72,7 @@ const getDownloadUri = function(urlObj){
             return resolve(data.direct_link);
         })
         .catch((err) => {
-            return reject(err);
+            return reject(err.error);
         })
     });
 }
