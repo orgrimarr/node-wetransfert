@@ -18,7 +18,7 @@ const { getInfo,  isValidWetransfertUrl, download } = require('wetransfert');
 ### download(url, folder)
 The function take a valid wetransfert url and a destination folder
 
-Simply return a [PromiseProgress](https://github.com/request/request)
+Simply return a [PromiseProgress](https://github.com/sindresorhus/p-progress)
 
 The response is an object describing the [weTransfert content](#response-exemple)
 
