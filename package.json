@@ -1,6 +1,6 @@
 {
   "name": "wetransfert",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Download wetransfert content with nodeJS",
   "main": "index.js",
   "repository": "https://github.com/orgrimarr/node-wetransfert.git",
