@@ -11,7 +11,7 @@ yarn add wetransfert
 ## You can require the module like this
 
 ``` javascript 
-const { getInfo,  isValidWetransfertUrl, download } = require('node-wetransfert');
+const { getInfo,  isValidWetransfertUrl, download } = require('wetransfert');
 ```  
 # Download weTransfert content from url
 
@@ -25,7 +25,7 @@ The response is an object describing the [weTransfert content](#response-exemple
 ## Exemple
 
 ``` javascript
-const { download } = require('node-wetransfert');
+const { download } = require('wetransfert');
 
 download(myUrl, myDestinationFolder)
   .onProgress(progress => {
@@ -44,7 +44,7 @@ download(myUrl, myDestinationFolder)
 ## Exemple
 
 ``` javascript 
-const { getInfo } = require('node-wetransfert');
+const { getInfo } = require('wetransfert');
 
 getInfo('myWeTransfertURL')
     .then((data) => {
