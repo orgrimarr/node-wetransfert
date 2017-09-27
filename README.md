@@ -1,9 +1,9 @@
 # node-wetransfert
-Download wetransfert content with nodeJS
+Download wetransfert content with nodeJS !
 
 ## Install
 ``` javascript 
-npm install wetransfert
+npm install wetransfert --save
 or
 yarn add wetransfert
 ```
@@ -11,28 +11,52 @@ yarn add wetransfert
 ## You can require the module like this
 
 ``` javascript 
-const { getInfo,  isValidWetransfertUrl} = require('node-wetransfert');
+const { getInfo,  isValidWetransfertUrl, download } = require('node-wetransfert');
 ```  
+# Download weTransfert content from url
 
-## Get information about weTransfert url
+### download(url, folder)
+The function take a valid wetransfert url and a destination folder
 
+Simply return a [PromiseProgress](https://github.com/request/request)
 
-For now you can just obtain an object witch contain a list a the weTransfert content and a download uri
+The response is an object describing the [weTransfert content](#response-exemple)
 
-# Exemple
+## Exemple
+
+``` javascript
+const { download } = require('node-wetransfert');
+
+download(myUrl, myDestinationFolder)
+  .onProgress(progress => {
+    console.log('progress', progress);
+  })
+  .then((res) => {
+    console.log(res); // success
+  })
+  .catch((err) => {
+    console.error('error  ', err);
+  });
+```
+
+# Get information about weTransfert url
+  
+## Exemple
 
 ``` javascript 
+const { getInfo } = require('node-wetransfert');
+
 getInfo('myWeTransfertURL')
     .then((data) => {
-        console.log('success  ', data)
+      console.log('success  ', data);
     })
     .catch((err) => {
-        console.error('error  ' + err)
+      console.error('error  ' + err);
     })
 
 ```
 
-# Response Exemple
+## Response Exemple
 
 ``` json
 {
@@ -71,12 +95,13 @@ getInfo('myWeTransfertURL')
 
 # isValidWetransfertUrl
 
-Return a nodeJS URL object if the url is valid
+Return a NodeJS URL object if the url is valid.
+
 If not, it return false
 
 
-## To do
+# To do
 
 - improve error handling
-- easy download with zip decompression
+- provide pip option for download function
 - upload

@@ -1,7 +1,7 @@
-const { getInfo,  isValidWetransfertUrl} = require('node-wetransfert');
+const { getInfo,  isValidWetransfertUrl, download} = require('../index');
 
-const myUrl = 'https://wetransfer.com/downloads/2ded33b26c077721e9e8c4708b32815920170902102205/48db1eb8dc2878fb1f62e8866bdd980520170902102205/5696ab?utm_campaign=WT_email_tracking&utm_content=general&utm_medium=download_button&utm_source=notify_recipient_email';
-
+const myUrl = 'https://wetransfer.com/downloads/29b3a2f0fdd34c84259db588212d2d4f20170927130043/94c9ed1d76df9ed8d7b3f07157e7f26220170927130043/a682c6';
+/*
 getInfo(myUrl)
     .then((data) => {
         console.log(JSON.stringify(data))
@@ -9,5 +9,17 @@ getInfo(myUrl)
     .catch((err) => {
         console.error('error  ' + err)
     })
+*/
+
+download(myUrl, './test/dest/wetransfert/totot/test')
+    .onProgress(progress => {
+        console.log('progress', progress);
+    })
+    .then((res) => {
+        console.log(res); // success
+    })
+    .catch((err) => {
+        console.error('error  ', err);
+    });
 
     
