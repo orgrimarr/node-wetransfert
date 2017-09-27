@@ -1,6 +1,6 @@
 const { getInfo,  isValidWetransfertUrl, download} = require('../index');
 
-const myUrl = 'https://wetransfer.com/downloads/29b3a2f0fdd34c84259db588212d2d4f20170927130043/94c9ed1d76df9ed8d7b3f07157e7f26220170927130043/a682c6';
+const myUrl = '';
 /*
 getInfo(myUrl)
     .then((data) => {
