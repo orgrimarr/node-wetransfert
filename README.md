@@ -7,6 +7,8 @@ npm install wetransfert --save
 or
 yarn add wetransfert
 ```
+Tested in node 8.x
+
 
 ## You can require the module like this
 

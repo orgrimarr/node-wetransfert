@@ -55,26 +55,26 @@ const getContentInfo = function(urlObj){
 }
 
 const getDownloadUri = function(urlObj){
-    return new Promise((resolve, reject) => {
-        const requestParams = formatDownloadApiUri(urlObj)
-        request({
-            method: 'POST',
-            uri: requestParams.uri,
-            body: requestParams.body,
-            'headers': {
-                'Content-Type': 'application/json',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36'
-            },
-            json: true,
-            simple: true,
-            resolveWithFullResponse: false
-        })
-        .then((data) =>{
+    return new Promise(async (resolve, reject) => {
+        try{
+            const requestParams = await formatDownloadApiUri(urlObj);
+            const data = await request({
+                method: 'POST',
+                uri: requestParams.uri,
+                body: requestParams.body,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36'
+                },
+                json: true,
+                simple: true,
+                resolveWithFullResponse: false
+            })
             return resolve(data.direct_link);
-        })
-        .catch((err) => {
-            return reject(err.error);
-        })
+        }
+        catch(e){
+            return reject (e.message || e.error || e);
+        }
     });
 }
 

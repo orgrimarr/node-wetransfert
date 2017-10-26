@@ -1,7 +1,7 @@
 const { isValidWetransfertUrl, formatDownloadApiUri }       = require('../utils/utils');
 const { getInfo }   = require('./getInfo');
 const Promise       = require("bluebird");
-const PProgress     = require('p-progress');
+const PProgress     = require('../utils/PProgress');
 const ReqProgress   = require('request-progress');
 const request       = require('request');
 const fstream       = require('fstream');
@@ -39,7 +39,7 @@ exports.download = function(url, destPath){
                     //         remaining: 81.403       // The remaining seconds to finish (3 decimals) 
                     //     } 
                     // } 
-                    progress(state.percent);
+                    progress(state.percent.toFixed(2));
                 })
                 .on('error', (err) => {
                     return reject(err);
