@@ -1,5 +1,6 @@
 const { isValidWetransfertUrl, formatDownloadApiUri }       = require('../utils/utils');
 const { getInfo }   = require('./getInfo');
+const Promise       = require("bluebird");
 const PProgress     = require('p-progress');
 const ReqProgress   = require('request-progress');
 const request       = require('request');
