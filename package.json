@@ -1,7 +1,17 @@
 {
   "name": "wetransfert",
   "version": "1.0.5",
-  "description": "Download wetransfert content with nodeJS",
+  "description": "Download/Upload wetransfer content with nodeJS - Unofficial API for wetransfer",
+  "keywords": [
+		"file transfer",
+		"we transfert",
+		"wetransfer",
+		"transfert",
+		"download",
+		"upload",
+		"API",
+		"api"
+	],
   "main": "index.js",
   "repository": "https://github.com/orgrimarr/node-wetransfert.git",
   "author": "orgrimarr",

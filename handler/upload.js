@@ -3,7 +3,9 @@ const { parseString}    = require('xml2js');
 const { basename }      = require('path');
 const EventEmitter      = require('events');
 const Promise           = require("bluebird");
-const request           = require('request-promise');
+const requestPromise    = require('request-promise');
+const ReqProgress       = require('request-progress');
+const request           = require('request');
 
 const xmlParseOptions = {
     explicitArray: false,
@@ -162,7 +164,7 @@ class Upload extends EventEmitter {
                 "filenames": fileNames
             };
             return new Promise((resolve, reject) => {
-                this.requestCue.emailRequest = request(this.formatRequestOption('POST', 'https://wetransfer.com/api/ui/transfers/email', body))
+                this.requestCue.emailRequest = requestPromise(this.formatRequestOption('POST', 'https://wetransfer.com/api/ui/transfers/email', body))
                 .then((res) =>{
                     return resolve(res);
                 }, (err) => {
@@ -175,7 +177,7 @@ class Upload extends EventEmitter {
                 return Promise.reject('Job Altready canceled in _finalize');
             }
             return new Promise((resolve, reject) => {
-                this.requestCue.finalize = request(this.formatRequestOption(
+                this.requestCue.finalize = requestPromise(this.formatRequestOption(
                     'PUT',
                     `https://wetransfer.com/api/ui/transfers/${this.id}/finalize`
                 ))
@@ -196,7 +198,7 @@ class Upload extends EventEmitter {
 
                 }
             }
-            request(this.formatRequestOption(
+            requestPromise(this.formatRequestOption(
                 'DELETE',
                 `https://wetransfer.com/api/ui/transfers/${this.id}`
             ))
@@ -325,7 +327,7 @@ class Upload extends EventEmitter {
             }
             
             return new Promise((resolve, reject) => {
-                this.requestCue.fileRequest = request(this.formatRequestOption(
+                this.requestCue.fileRequest = requestPromise(this.formatRequestOption(
                     'POST',
                     `https://wetransfer.com/api/ui/transfers/${this.id}/files`, {
                         "name": filename,
@@ -344,7 +346,7 @@ class Upload extends EventEmitter {
                 return Promise.reject('Job Altready canceled in _chunkRequest');
             }
             return new Promise((resolve, reject) => {
-                this.requestCue.chunkRequest = request(this.formatRequestOption(
+                this.requestCue.chunkRequest = requestPromise(this.formatRequestOption(
                     'PUT',
                     `https://wetransfer.com/api/ui/transfers/${this.id}/files/${fileID}`, {
                         "chunk_number": chunk_number || 1,
@@ -385,7 +387,7 @@ class Upload extends EventEmitter {
                 };
                 
                 return new Promise((resolve, reject) => {
-                    this.requestCue.s3upload = request(options)
+                    this.requestCue.s3upload = requestPromise(options)
                     .then((res) =>{
                         return resolve(res);
                     }, (err) => {
@@ -401,7 +403,7 @@ class Upload extends EventEmitter {
                 return Promise.reject('Job Altready canceled in _finalizeFile');
             }
             return new Promise((resolve, reject) => {
-                this.requestCue.finalizeFile = request(this.formatRequestOption(
+                this.requestCue.finalizeFile = requestPromise(this.formatRequestOption(
                     'PUT',
                     `https://wetransfer.com/api/ui/transfers/${this.id}/files/${fileId}/finalize`, {
                         "chunk_count": chunk_number

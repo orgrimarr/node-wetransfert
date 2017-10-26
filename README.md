@@ -1,5 +1,5 @@
 # [node-wetransfert](https://github.com/orgrimarr/node-wetransfert)
-## Download [wetransfert](https://wetransfer.com/) content with nodeJS !
+## Download/Upload [wetransfert](https://wetransfer.com/) content with nodeJS ! - Unofficial API for wetransfer
 
 # Install
 ```
@@ -13,22 +13,23 @@ yarn add wetransfert
 ``` javascript 
 const { upload, download, getInfo,  isValidWetransfertUrl  } = require('wetransfert');
 ```  
+
 # Upload
 You can upload a total file size >= 2Gibibyte (2147483648 Byte)
 
 upload('mailSender', ['receiverMail'], ['file1'], 'myMessage', 'ui_language')
 
-The upload function parameter :
+The upload function parameters :
 - mailSender: A valid mail address of the sender
 - receiverMail: An array of valid destination address
 - file1: An array of valid file path you wan to transfer
 - myMessage: The message you want to send
 - ui_language: The language of the wetransfer receiver. ex: en, fr
 
-The upload function expose an event emitter and will trig 3 event :
-- progress: Represent to state of the uploadS
-- end: It wiil be triged when the upload end with success. 
-- error: Il will be triged on error, the transfert is canceled after an error
+The upload function expose an event emitter and will trigger 3 event :
+- progress: Represent the state of the upload
+- end: It wil be triggered when the upload end with success. 
+- error: Il will be triggered on error, the transfer is canceled after an error
 
 ## Exemple
 ``` javascript
@@ -57,7 +58,7 @@ The upload function expose an event emitter and will trig 3 event :
   }        
 }
 ```
-- percent: Overall percent (between 0 to 1)
+- percent: Overall percentage (between 0 to 1)
 - speed: The upload speed in bytes/sec
 - total: The total payload size in bytes 
 - transferred: The transferred payload size in bytes
@@ -72,7 +73,7 @@ The end object is the same as the download response object or the get info respo
 # Download weTransfer content from url
 
 ### download(url, folder)
-The function take a valid wetransfert url and a destination folder
+The function take a valid wetransfer url and a destination folder
 
 Simply return a [PromiseProgress](https://github.com/sindresorhus/p-progress)
 
@@ -160,3 +161,12 @@ If not, it return false
 
 - improve error handling
 - provide pip option for download/upload function
+- 
+
+
+# Known Bugs
+- 
+
+
+Don't hesitate to give your feedback on github and let me know of any bug you might encounter
+
