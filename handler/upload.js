@@ -88,13 +88,26 @@ class Upload extends EventEmitter {
     
                 this.totalSizeToUpload = 0;
                 this.totalSizeUploaded = 0;
-                this.totalProgress     = 0;
+                this.startTime = Date.now();
+
                 for(let i in this.fileToUpload){
                     this.totalSizeToUpload += this.fileToUpload[i].size;
                 }
                 if(this.totalSizeToUpload > 2147483648){
                     return this.emit('error', `Total fileSize cant exeed 2Gibibyte, your total size is ${this.totalSizeToUpload} Byte only accept 2147483648 Byte`);
                 }
+                this.totalProgress = {
+                    "percent": 0,                
+                    "speed": 'NA for the moment',               
+                    "size": { 
+                        "total": this.totalSizeToUpload,        
+                        "transferred": 0
+                    }, 
+                    "time": { 
+                        "elapsed": 0,        
+                        "remaining": 'NA for the moment'       
+                    }  
+                };
     
                 // start workflow
                 const res = await this.emailRequest();
@@ -275,9 +288,12 @@ class Upload extends EventEmitter {
                                     totalUploaded += currentChunkLength;
                                     this.totalSizeUploaded += currentChunkLength;
                                     const progress = (this.totalSizeUploaded / this.totalSizeToUpload).toFixed(2);
-                                    if(this.totalProgress < progress){
-                                        this.totalProgress = progress;
-                                        this.emit('progress', progress);
+                                    if(this.totalProgress.percent < progress){
+                                        this.totalProgress.percent = progress;     
+                                        this.totalProgress.size.transferred = this.totalSizeUploaded; 
+                                        const now = Date.now();
+                                        this.totalProgress.time.elapsed += (now - this.startTime); 
+                                        this.emit('progress', this.totalProgress);
                                     }
                                     uploadFileStream.resume();
                                 }
@@ -298,9 +314,12 @@ class Upload extends EventEmitter {
                                 totalUploaded += currentChunkLength;
                                 this.totalSizeUploaded += currentChunkLength;
                                 const progress = (this.totalSizeUploaded / this.totalSizeToUpload).toFixed(2);
-                                if(this.totalProgress < progress){
-                                    this.totalProgress = progress;
-                                    this.emit('progress', progress);
+                                if(this.totalProgress.percent < progress){
+                                    this.totalProgress.percent = progress;     
+                                    this.totalProgress.size.transferred = this.totalSizeUploaded; 
+                                    const now = Date.now();
+                                    this.totalProgress.time.elapsed += (now - this.startTime); 
+                                    this.emit('progress', this.totalProgress);
                                 }
                                 const final = await this.finalizeFile(fileObj.id, currentChunkOffset);
                                 return resolve(final);
