@@ -45,18 +45,24 @@ The upload function expose an event emitter and will trig 3 event :
 ## Progress object
 ``` json
 {
-  percent: 0.5,               Overall percent (between 0 to 1) 
-  speed: 554732,              The upload speed in bytes/sec 
-  size: { 
-      total: 90044871,        The total payload size in bytes 
-      transferred: 27610959   The transferred payload size in bytes 
+  "percent": 0.5,                
+  "speed": 554732,               
+  "size": { 
+      "total": 90044871,        
+      "transferred": 27610959    
   }, 
-  time: { 
-      elapsed: 36.235,        The total elapsed seconds since the start (3 decimals) 
-      remaining: 81.403       The remaining seconds to finish (3 decimals)
+  "time": { 
+      "elapsed": 36.235,        
+      "remaining": 81.403       
   }        
 }
 ```
+- percent: Overall percent (between 0 to 1)
+- speed: The upload speed in bytes/sec
+- total: The total payload size in bytes 
+- transferred: The transferred payload size in bytes
+- elapsed: The total elapsed seconds since the start (3 decimals) 
+- remaining: The remaining seconds to finish (3 decimals)
 
 ## End object
 The end object is the same as the download response object or the get info response object
