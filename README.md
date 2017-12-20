@@ -13,7 +13,7 @@ Tested in node 8.x
 ## You can require the module like this
 
 ``` javascript 
-const { upload, download, getInfo,  isValidWetransfertUrl  } = require('wetransfert');
+const { upload, download, getInfo, isValidWetransfertUrl } = require('wetransfert');
 ```  
 
 # Upload
