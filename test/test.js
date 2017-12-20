@@ -1,4 +1,4 @@
-const { getInfo, isValidWetransfertUrl, download, upload} = require('../index');
+const { getInfo, isValidWetransfertUrl, download, upload } = require('../index');
 const Promise                           = require("bluebird");
 const { parseString }                   = require ('xml2js');
 const fs = require('fs')
