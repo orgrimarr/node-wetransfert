@@ -28,5 +28,14 @@ const testUpload = function(){
     }, 10000);
 }
 
+const testUploadLink = function(){
+    const myUpload = upload('', '', [ './test/test.js' ], 'tesdkjnsdjgbsdiosdbosdbdgdbohsdbgodbfofhst', 'en')
+    .on('progress', (progress) => console.log('PROGRESS', progress))
+    .on('end', (end) => console.log('END', end))
+    .on('error', (error) => console.error('ERROR', error));
+
+}
+
 //testDownload();
 testUpload();
+//testUploadLink();

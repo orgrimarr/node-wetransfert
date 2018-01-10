@@ -48,17 +48,19 @@ class Upload extends EventEmitter {
         this.lunchupload = async function() {
             try {
                 // verification
-                if (!this.mailFrom || typeof this.mailFrom !== 'string' || !this.validateEmail(this.mailFrom)) {
-                    return this.emit('error', 'No mail from found or mail from is not a string or is not a valide email');
-                }
-                if (!this.mailRecipients || !Array.isArray(this.mailRecipients) || this.mailRecipients.length < 1) {
-                    return this.emit('error', 'No mail recipients found or is not an array');
-                }
-                for (let i in this.mailRecipients) {
-                    const currentMail = this.mailRecipients[i];
-                    if (typeof currentMail !== 'string' || !this.validateEmail(currentMail)) {
-                        return this.emit('error', 'No mail recipient found or mail recipient is not a valide email');
-                    }
+                if (this.mailFrom !== '' || this.mailRecipients !== '') {
+                  if (!this.mailFrom || typeof this.mailFrom !== 'string' || !this.validateEmail(this.mailFrom)) {
+                      return this.emit('error', 'No mail from found or mail from is not a string or is not a valide email');
+                  }
+                  if (!this.mailRecipients || !Array.isArray(this.mailRecipients) || this.mailRecipients.length < 1) {
+                      return this.emit('error', 'No mail recipients found or is not an array');
+                  }
+                  for (let i in this.mailRecipients) {
+                      const currentMail = this.mailRecipients[i];
+                      if (typeof currentMail !== 'string' || !this.validateEmail(currentMail)) {
+                          return this.emit('error', 'No mail recipient found or mail recipient is not a valide email');
+                      }
+                  }
                 }
                 const knowFileName = new Set();
                 for (let i of this.filePaths) {
@@ -85,7 +87,7 @@ class Upload extends EventEmitter {
                 if(knowFileName.length < 1){
                     return this.emit('error', 'you must provide at least one file');
                 }
-    
+
                 this.totalSizeToUpload = 0;
                 this.totalSizeUploaded = 0;
                 this.startTime = Date.now();
@@ -97,18 +99,18 @@ class Upload extends EventEmitter {
                     return this.emit('error', `Total fileSize cant exeed 2Gibibyte, your total size is ${this.totalSizeToUpload} Byte only accept 2147483648 Byte`);
                 }
                 this.totalProgress = {
-                    "percent": 0,                
-                    "speed": 'NA for the moment',               
-                    "size": { 
-                        "total": this.totalSizeToUpload,        
+                    "percent": 0,
+                    "speed": 'NA for the moment',
+                    "size": {
+                        "total": this.totalSizeToUpload,
                         "transferred": 0
-                    }, 
-                    "time": { 
-                        "elapsed": 0,        
-                        "remaining": 'NA for the moment'       
-                    }  
+                    },
+                    "time": {
+                        "elapsed": 0,
+                        "remaining": 'NA for the moment'
+                    }
                 };
-    
+
                 // start workflow
                 const res = await this.emailRequest();
                 this.id = res.id;
@@ -133,10 +135,10 @@ class Upload extends EventEmitter {
             } catch (e) {
                 if(!this.isCanceled){
                     this.emit('error', e);
-                }  
+                }
             }
         }
-        
+
         //Utils
         this.validateEmail = function(email) {
             var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -159,7 +161,7 @@ class Upload extends EventEmitter {
                 resolveWithFullResponse: false
             }
         }
-        
+
         // WF
         this.emailRequest = function() {
             if(this.isCanceled){
@@ -169,15 +171,20 @@ class Upload extends EventEmitter {
             for(let i in this.fileToUpload){
                 fileNames.push(i);
             }
-            const body = {
-                "recipients": this.mailRecipients,
-                "message": typeof this.message === 'string' ? this.message : '',
-                "from": this.mailFrom,
-                "ui_language": typeof this.ui_language === 'string' ? this.ui_language : 'en',
-                "filenames": fileNames
-            };
+            let url = 'https://wetransfer.com/api/ui/transfers/link'
+            let body = {
+                    "message": typeof this.message === 'string' ? this.message : '',
+                    "ui_language": typeof this.ui_language === 'string' ? this.ui_language : 'en',
+                    "filenames": fileNames
+                }
+            if (this.mailFrom !== '' || this.mailRecipients !== '') {
+              body.recipients = this.mailRecipients;
+              body.from = this.mailFrom;
+              url = 'https://wetransfer.com/api/ui/transfers/email'
+            }
+
             return new Promise((resolve, reject) => {
-                this.requestCue.emailRequest = requestPromise(this.formatRequestOption('POST', 'https://wetransfer.com/api/ui/transfers/email', body))
+                this.requestCue.emailRequest = requestPromise(this.formatRequestOption('POST', url, body))
                 .then((res) =>{
                     return resolve(res);
                 }, (err) => {
@@ -199,7 +206,7 @@ class Upload extends EventEmitter {
                 }, (err) => {
                     return reject(err);
                 })
-            }); 
+            });
         }
         this.cancelJob = function(error){
             this.isCanceled = true
@@ -229,7 +236,7 @@ class Upload extends EventEmitter {
                 return this.emit('error', error);
             })
         }
-        
+
         // PerFile functions
         this.uploadFileWF = function(currestFileObject) {
             if(this.isCanceled){
@@ -251,7 +258,7 @@ class Upload extends EventEmitter {
                     let receivedBuffersLength = 0;
                     let currentChunkOffset = 0; // On commence à 1
                     let totalUploaded = 0;
-            
+
                     const getChunk = async function () {
                         try {
                             const combinedBuffer = Buffer.concat(receivedBuffers, receivedBuffersLength);
@@ -261,7 +268,7 @@ class Upload extends EventEmitter {
                             combinedBuffer.copy(remainder, 0, fileObj.chunk_size);
                             receivedBuffers.push(remainder);
                             receivedBuffersLength = remainder.length;
-            
+
                             // Return the perfectly sized part.
                             const uploadBuffer = new Buffer(fileObj.chunk_size);
                             combinedBuffer.copy(uploadBuffer, 0, 0, fileObj.chunk_size);
@@ -270,7 +277,7 @@ class Upload extends EventEmitter {
                             throw e.error || e;
                         }
                     }
-            
+
                     const neededChunk = fileObj.size > fileObj.chunk_size ? Math.floor(fileObj.size / fileObj.chunk_size) + 1 : 1;
                     uploadFileStream = createReadStream(fileObj.path)
                         .on('data', async (chunk) => {
@@ -289,10 +296,10 @@ class Upload extends EventEmitter {
                                     this.totalSizeUploaded += currentChunkLength;
                                     const progress = (this.totalSizeUploaded / this.totalSizeToUpload).toFixed(2);
                                     if(this.totalProgress.percent < progress){
-                                        this.totalProgress.percent = progress;     
-                                        this.totalProgress.size.transferred = this.totalSizeUploaded; 
+                                        this.totalProgress.percent = progress;
+                                        this.totalProgress.size.transferred = this.totalSizeUploaded;
                                         const now = Date.now();
-                                        this.totalProgress.time.elapsed += (now - this.startTime); 
+                                        this.totalProgress.time.elapsed += (now - this.startTime);
                                         this.emit('progress', this.totalProgress);
                                     }
                                     uploadFileStream.resume();
@@ -315,10 +322,10 @@ class Upload extends EventEmitter {
                                 this.totalSizeUploaded += currentChunkLength;
                                 const progress = (this.totalSizeUploaded / this.totalSizeToUpload).toFixed(2);
                                 if(this.totalProgress.percent < progress){
-                                    this.totalProgress.percent = progress;     
-                                    this.totalProgress.size.transferred = this.totalSizeUploaded; 
+                                    this.totalProgress.percent = progress;
+                                    this.totalProgress.size.transferred = this.totalSizeUploaded;
                                     const now = Date.now();
-                                    this.totalProgress.time.elapsed += (now - this.startTime); 
+                                    this.totalProgress.time.elapsed += (now - this.startTime);
                                     this.emit('progress', this.totalProgress);
                                 }
                                 const final = await this.finalizeFile(fileObj.id, currentChunkOffset);
@@ -344,7 +351,7 @@ class Upload extends EventEmitter {
             if(this.isCanceled){
                 return Promise.reject('Job Altready canceled in _fileRequest');
             }
-            
+
             return new Promise((resolve, reject) => {
                 this.requestCue.fileRequest = requestPromise(this.formatRequestOption(
                     'POST',
@@ -404,7 +411,7 @@ class Upload extends EventEmitter {
                         filename: fileName
                     }
                 };
-                
+
                 return new Promise((resolve, reject) => {
                     this.requestCue.s3upload = requestPromise(options)
                     .then((res) =>{
@@ -435,10 +442,10 @@ class Upload extends EventEmitter {
                 })
             });
         }
-        
+
         this.lunchupload();
     }
-    
+
     cancel(){ return this.emit('cancel'); }
 }
 
