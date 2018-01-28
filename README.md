@@ -12,7 +12,7 @@ Tested in node 8.x
 
 ## You can require the module like this
 
-``` javascript 
+``` javascript
 const { upload, download, getInfo, isValidWetransfertUrl } = require('wetransfert');
 ```  
 
@@ -30,7 +30,7 @@ The upload function parameters :
 
 The upload function expose an event emitter and will trigger 3 event :
 - progress: Represent the state of the upload
-- end: It wil be triggered when the upload end with success. 
+- end: It wil be triggered when the upload end with success.
 - error: Il will be triggered on error, the transfer is canceled after an error
 
 ## Exemple
@@ -50,11 +50,11 @@ The upload function expose an event emitter and will trigger 3 event :
 {
   "percent": 0.5,                
   "speed": 554732,               
-  "size": { 
+  "size": {
       "total": 90044871,        
       "transferred": 27610959    
-  }, 
-  "time": { 
+  },
+  "time": {
       "elapsed": 36.235,        
       "remaining": 81.403       
   }        
@@ -62,13 +62,19 @@ The upload function expose an event emitter and will trigger 3 event :
 ```
 - percent: Overall percentage (between 0 to 1)
 - speed: The upload speed in bytes/sec
-- total: The total payload size in bytes 
+- total: The total payload size in bytes
 - transferred: The transferred payload size in bytes
-- elapsed: The total elapsed seconds since the start (3 decimals) 
+- elapsed: The total elapsed seconds since the start (3 decimals)
 - remaining: The remaining seconds to finish (3 decimals)
 
 ## End object
 The end object is the same as the download response object or the get info response object
+
+## Upload without email
+
+If mailSender and receiverMail is equal '', you can upload files without send email.
+Remember do not forget get URL in "end" object.
+
 
 [End Object](#response-exemple)
 
@@ -99,10 +105,10 @@ download(myUrl, myDestinationFolder)
 ```
 
 # Get information about weTransfert url
-  
+
 ## Exemple
 
-``` javascript 
+``` javascript
 const { getInfo } = require('wetransfert');
 
 getInfo('myWeTransfertURL')
@@ -136,7 +142,7 @@ getInfo('myWeTransfertURL')
         "previewable": false
       },
       {
-        
+
       }
     ],
     "password_protected": false,
@@ -163,12 +169,11 @@ If not, it return false
 
 - improve error handling
 - provide pip option for download/upload function
-- 
+-
 
 
 # Known Bugs
-- 
+-
 
 
 Don't hesitate to give your feedback on github and let me know of any bug you might encounter
-
