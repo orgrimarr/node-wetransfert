@@ -11,7 +11,7 @@
     "upload",
     "API",
     "api"
-  ]
+  ],
   "main": "index.js",
   "repository": "https://github.com/orgrimarr/node-wetransfert.git",
   "author": "orgrimarr",

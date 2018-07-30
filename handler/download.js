@@ -1,6 +1,4 @@
-const { isValidWetransfertUrl, formatDownloadApiUri }       = require('../utils/utils');
 const { getInfo }   = require('./getInfo');
-const Promise       = require("bluebird");
 const PProgress     = require('../utils/PProgress');
 const ReqProgress   = require('request-progress');
 const request       = require('request');
@@ -12,7 +10,7 @@ const fs            = require('fs');
 
 
 
-exports.download = function(url, destPath){
+exports.download = function(url = '', destPath= null){
     return new PProgress(async (resolve, reject, progress) => {
         if(!destPath){
             return reject(new Error('Not destination path found'));
@@ -47,7 +45,7 @@ exports.download = function(url, destPath){
                 .on('end', () => {
                     return resolve(weTransfertObject);
                 })
-            if(weTransfertObject.content.items.length > 2 ? true : false){
+            if(weTransfertObject.content.items.length >= 2 ? true : false){
                 mkdirp(destPath, (err) =>{
                     if(err) return reject(err);
                     downloadProcess
