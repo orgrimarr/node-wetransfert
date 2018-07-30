@@ -45,7 +45,7 @@ exports.download = function(url = '', destPath= null){
                 .on('end', () => {
                     return resolve(weTransfertObject);
                 })
-            if(weTransfertObject.content.items.length > 2 ? true : false){
+            if(weTransfertObject.content.items.length >= 2 ? true : false){
                 mkdirp(destPath, (err) =>{
                     if(err) return reject(err);
                     downloadProcess
