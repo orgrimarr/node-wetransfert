@@ -15,13 +15,16 @@ const reveiverSender = ['mail1@receiver.com', 'mail2@receiver.com']
 // An array of file you want to upload. Ex : ['/home/orgrimarr/wetransfer/file1', '/home/orgrimarr/wetransfer/file2']
 const filesToUpload = ['/home/orgrimarr/wetransfer/file1', '/home/orgrimarr/wetransfer/file2']
 // The body of the email
-const body = 'Hello this is an upload from orgrimarr/node-wetransfert API'
+const body = 'Hi this is an upload from orgrimarr/node-wetransfert API'
 // Language, used in the weetranfer download ux : ex: en, fr
 const language = 'en'
 // Time after which the quest will be canceled, if set to 0 the request will not be canceled. ex 0
 const cancel = 0
 
 /////// TEST SECTION //////////
+
+// Uncomment 
+
 //testDownload();
 //testUpload();
 //testUploadLink();
