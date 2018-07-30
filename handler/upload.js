@@ -7,6 +7,7 @@ const requestPromise    = require('request-promise');
 class Upload extends EventEmitter {
     constructor(mailFrom= '', mailRecipients = '', filePaths = [], message = '', ui_language = 'en') {
         super();
+        this.apiVersion = "v4"
         this.id = '';
         this.mailFrom = mailFrom;
         this.mailRecipients = mailRecipients;
@@ -164,7 +165,7 @@ class Upload extends EventEmitter {
         for(let i in this.fileToUpload){
             fileNames.push(i);
         }
-        let url = 'https://wetransfer.com/api/ui/transfers/link'
+        let url = `https://wetransfer.com/api/${this.apiVersion}/transfers/link`
         let body = {
                 "message": typeof this.message === 'string' ? this.message : '',
                 "ui_language": typeof this.ui_language === 'string' ? this.ui_language : 'en',
@@ -173,7 +174,7 @@ class Upload extends EventEmitter {
         if (this.mailFrom !== '' || this.mailRecipients !== '') {
             body.recipients = this.mailRecipients;
             body.from = this.mailFrom;
-            url = 'https://wetransfer.com/api/ui/transfers/email'
+            url = `https://wetransfer.com/api/${this.apiVersion}/transfers/email`
         }
 
         return new Promise((resolve, reject) => {
@@ -192,7 +193,7 @@ class Upload extends EventEmitter {
         return new Promise((resolve, reject) => {
             this.requestCue.finalize = requestPromise(this.formatRequestOption(
                 'PUT',
-                `https://wetransfer.com/api/ui/transfers/${this.id}/finalize`
+                `https://wetransfer.com/api/${this.apiVersion}/transfers/${this.id}/finalize`
             ))
             .then((res) =>{
                 return resolve(res);
@@ -213,7 +214,7 @@ class Upload extends EventEmitter {
         }
         requestPromise(this.formatRequestOption(
             'DELETE',
-            `https://wetransfer.com/api/ui/transfers/${this.id}`
+            `https://wetransfer.com/api/${this.apiVersion}/transfers/${this.id}`
         ))
         .then(() => {
             if(!this.fatalError){
@@ -348,7 +349,7 @@ class Upload extends EventEmitter {
         return new Promise((resolve, reject) => {
             this.requestCue.fileRequest = requestPromise(this.formatRequestOption(
                 'POST',
-                `https://wetransfer.com/api/ui/transfers/${this.id}/files`, {
+                `https://wetransfer.com/api/${this.apiVersion}/transfers/${this.id}/files`, {
                     "name": filename,
                     "size": chunk_size
                 }
@@ -367,7 +368,7 @@ class Upload extends EventEmitter {
         return new Promise((resolve, reject) => {
             this.requestCue.chunkRequest = requestPromise(this.formatRequestOption(
                 'PUT',
-                `https://wetransfer.com/api/ui/transfers/${this.id}/files/${fileID}`, {
+                `https://wetransfer.com/api/${this.apiVersion}/transfers/${this.id}/files/${fileID}`, {
                     "chunk_number": chunk_number || 1,
                     "chunk_size": chunk_size,
                     "retries": retries || 0
@@ -424,7 +425,7 @@ class Upload extends EventEmitter {
         return new Promise((resolve, reject) => {
             this.requestCue.finalizeFile = requestPromise(this.formatRequestOption(
                 'PUT',
-                `https://wetransfer.com/api/ui/transfers/${this.id}/files/${fileId}/finalize`, {
+                `https://wetransfer.com/api/${this.apiVersion}/transfers/${this.id}/files/${fileId}/finalize`, {
                     "chunk_count": chunk_number
                 }
             ))
