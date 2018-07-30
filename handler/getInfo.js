@@ -1,6 +1,5 @@
 const cheerio                                               = require('cheerio');
 const request                                               = require('request-promise');
-const Promise                                               = require("bluebird");
 const { isValidWetransfertUrl, formatDownloadApiUri }       = require('../utils/utils');
 
 
