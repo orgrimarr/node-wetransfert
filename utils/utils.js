@@ -43,7 +43,7 @@ exports.formatDownloadApiUri = async function(urlObj){
                 }
             }
         }
-        if(weTransfertRegexMoy.exec(url) !== null){
+        if(weTransfertRegexMoy.exec(urlObj.href) !== null){
             const [, , urlID, hash] = urlObj.pathname.split('/');
             return  {
                 uri: `https://wetransfer.com/api/${apiVersion}/transfers/${urlID}/download`,
