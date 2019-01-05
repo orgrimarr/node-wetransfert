@@ -1,6 +1,9 @@
 # [node-wetransfert](https://github.com/orgrimarr/node-wetransfert)
 ## Download/Upload [wetransfert](https://wetransfer.com/) content with nodeJS ! - Unofficial API for wetransfer
 
+ [![Known Vulnerabilities](https://snyk.io/test/github/orgrimarr/node-wetransfert/badge.svg)](https://snyk.io/test/github/orgrimarr/node-wetransfert) 
+
+
 # Install
 ```
 npm install wetransfert --save

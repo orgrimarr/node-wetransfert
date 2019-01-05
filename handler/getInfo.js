@@ -1,31 +1,34 @@
-const cheerio                                               = require('cheerio');
-const request                                               = require('request-promise');
-const { isValidWetransfertUrl, formatDownloadApiUri }       = require('../utils/utils');
+const cheerio = require('cheerio');
+const request = require('request-promise');
+const {
+    isValidWetransfertUrl,
+    formatDownloadApiUri,
+    waitAsync
+} = require('../utils/utils');
 
 
-const _preloaded_transfer_Regex     = /\_preloaded\_transfer\_/g;
-const removeVarDeclarationRegex     = /var[\s]*\_preloaded\_transfer\_[\s]*=/g;
-const removeLastSemicolon           = /(}\;\n)$/g;
+const _preloaded_transfer_Regex = /\_preloaded\_transfer\_/g;
+const removeVarDeclarationRegex = /var[\s]*\_preloaded\_transfer\_[\s]*=/g;
+const removeLastSemicolon = /(}\;\n)$/g;
 
 
-const extractVar = function(text){
+const extractVar = function (text) {
     return new Promise((resolve, reject) => {
-        try{
+        try {
             const json = text.replace(removeVarDeclarationRegex, '').replace(removeLastSemicolon, '}');
             return resolve(JSON.parse(json));
-        }
-        catch(e){
+        } catch (e) {
             return reject(e.message);
         }
     });
 }
 
-const extractScriptContent = function(body){ // Return a list of var
+const extractScriptContent = function (body) { // Return a list of var
     return new Promise((resolve, reject) => {
         const $ = cheerio.load(body);
-        $('script').each(function(index, element) {
+        $('script').each(function (index, element) {
             const content = $(this).html();
-            if(_preloaded_transfer_Regex.exec(content)){
+            if (_preloaded_transfer_Regex.exec(content)) {
                 return resolve(content);
             }
         })
@@ -33,29 +36,29 @@ const extractScriptContent = function(body){ // Return a list of var
     });
 }
 
-const getContentInfo = function(urlObj){
+const getContentInfo = function (urlObj) {
     return new Promise((resolve, reject) => {
         request({
-            method: 'GET',
-            uri: urlObj.href,
-            json: false,
-            simple: true,
-            resolveWithFullResponse: false
-        })
-        .then(extractScriptContent)
-        .then(extractVar)
-        .then((content) => {
-            return resolve(content);
-        })
-        .catch((err) => {
-            return reject(err.error);
-        })
+                method: 'GET',
+                uri: urlObj.href,
+                json: false,
+                simple: true,
+                resolveWithFullResponse: false
+            })
+            .then(extractScriptContent)
+            .then(extractVar)
+            .then((content) => {
+                return resolve(content);
+            })
+            .catch((err) => {
+                return reject(err.error);
+            })
     });
 }
 
-const getDownloadUri = function(urlObj){
+const getDownloadUri = function (urlObj) {
     return new Promise(async (resolve, reject) => {
-        try{
+        try {
             const requestParams = await formatDownloadApiUri(urlObj);
             const data = await request({
                 method: 'POST',
@@ -70,14 +73,13 @@ const getDownloadUri = function(urlObj){
                 resolveWithFullResponse: false
             })
             return resolve(data.direct_link);
-        }
-        catch(e){
-            return reject (e.message || e.error || e);
+        } catch (e) {
+            return reject(e.message || e.error || e);
         }
     });
 }
 
-const formatResult = function(array){
+const formatResult = function (array) {
     return new Promise((resolve, reject) => {
         return resolve({
             content: array[0],
@@ -85,27 +87,47 @@ const formatResult = function(array){
         });
     });
 }
-
-exports.getInfo = function(url){
-    return new Promise((resolve, reject) => {
-        if(typeof(url) === 'string'){
+const getInfo = async function (url) {
+    try {
+        if (typeof (url) === 'string') {
             const URLObject = isValidWetransfertUrl(url);
-            if(URLObject){
-                Promise.all([getContentInfo(URLObject), getDownloadUri(URLObject)])
-                .then(formatResult)
-                .then((result) => {
-                    return resolve(result);
-                })
-                .catch((err) => {
-                    return reject(err);
-                })
+            if (URLObject) {
+                const infos = await getContentInfo(URLObject)
+                // Cannot get downloadURI if state !== downloadable
+                if (infos.state !== "downloadable") {
+                    return formatResult([infos, null])
+                }
+                const downloadURI = await getDownloadUri(URLObject)
+                return formatResult([infos, downloadURI])
+            } else {
+                throw new Error(`Unhanle url: ${URLObject.href}`);
             }
-            else{
-                return reject('Unhanle url');
-            }
+        } else {
+            throw new Error('Unhanle url - url must be a string');
+        }
+
+    } catch (err) {
+        throw err
+    }
+}
+
+
+const waitForDownloadable = async function (responseObj) {
+    try {
+        if(responseObj.state === "downloadable" || (typeof responseObj.content === "object" && responseObj.content.state === "downloadable")){
+            return responseObj.content || responseObj
         }
         else{
-            return reject('Unhanle url - url must be a string');
+            console.log("node-wetransfert: wait 5s for downloadable state")
+            await waitAsync(5000)
+            const infos = await(getInfo(responseObj.shortened_url || (typeof responseObj.content === "object" ? responseObj.content.shortened_url : undefined)))
+            return waitForDownloadable(infos)
         }
-    });
+    } catch (error) {
+        throw error
+    }
 }
+
+
+exports.getInfo = getInfo
+exports.waitForDownloadable = waitForDownloadable
