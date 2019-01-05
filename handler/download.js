@@ -2,9 +2,9 @@ const { getInfo }   = require('./getInfo');
 const PProgress     = require('../utils/PProgress');
 const ReqProgress   = require('request-progress');
 const request       = require('request');
-const fstream       = require('fstream');
+//const fstream       = require('fstream');
 const mkdirp        = require('mkdirp');
-const unzip         = require('unzip');
+const unzip         = require('unzipper');
 const path          = require('path');
 const fs            = require('fs');
 
@@ -49,8 +49,8 @@ exports.download = function(url = '', destPath= null){
                 mkdirp(destPath, (err) =>{
                     if(err) return reject(err);
                     downloadProcess
-                        .pipe(unzip.Parse())
-                        .pipe(fstream.Writer(destPath));
+                        .pipe(unzip.Extract({ path: destPath }))
+//                        .pipe(fstream.Writer(destPath))
                 });
             }
             else{
@@ -67,4 +67,29 @@ exports.download = function(url = '', destPath= null){
             return reject(e);
         }
     });
+}
+
+
+/* API
+    downloadPipe('http://wetransfertURI)
+    .then(files.pipe(WritableStream))
+    .catch(console.error)
+*/
+exports.downloadPipe = async function(url = ''){
+    try{
+        console.log("downloadPipe", url)
+        const weTransfertObject = await getInfo(url);
+        console.log("weTransfertObject", weTransfertObject)
+        console.log("weTransfertObject.downloadURI", weTransfertObject.downloadURI)
+        if(!weTransfertObject) {
+            throw new Error('Not a valid url');
+        }
+        return ReqProgress(request(weTransfertObject.downloadURI), {
+           throttle: 500,
+           delay: 0,
+        })
+    }
+    catch(error){
+        throw error
+    }
 }

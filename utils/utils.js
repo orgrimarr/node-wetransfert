@@ -16,7 +16,7 @@ function expandUrl(shortUrl) {
 }
 
 const weTransfertRegex      = /(https:\/\/wetransfer\.com\/downloads\/[0-9a-z]{10,}\/[0-9a-z]{10,}\/[0-9a-z]{4,})/;
-const weTransfertRegexShort = /(https:\/\/we\.tl\/[0-9a-zA-Z]{5,})/;
+const weTransfertRegexShort = /(https:\/\/we\.tl\/.{5,})/;
 const weTransfertRegexMoy   = /(https:\/\/wetransfer\.com\/downloads\/[0-9a-z]{10,}\/[0-9a-z]{4,})/;
 
 exports.isValidWetransfertUrl = function(url){
@@ -66,4 +66,12 @@ exports.formatDownloadApiUri = async function(urlObj){
     catch(e){
         throw e;
     }
+}
+
+exports.waitAsync = function(time, data){
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            return resolve(data)
+        }, time)
+    })
 }

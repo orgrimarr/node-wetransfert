@@ -1,6 +1,9 @@
 # [node-wetransfert](https://github.com/orgrimarr/node-wetransfert)
 ## Download/Upload [wetransfert](https://wetransfer.com/) content with nodeJS ! - Unofficial API for wetransfer
 
+ [![Known Vulnerabilities](https://snyk.io/test/github/orgrimarr/node-wetransfert/badge.svg)](https://snyk.io/test/github/orgrimarr/node-wetransfert) 
+
+
 # Install
 ```
 npm install wetransfert --save
@@ -45,6 +48,67 @@ The upload function expose an event emitter and will trigger 3 event :
     }, 10000);
 ```
 
+## Payload Exemple
+``` javascript
+    const toUpload = [
+        path.resolve(__dirname, './ressources/flower-3876195_960_720.jpg'),   // Upload a file from path
+        path.resolve(__dirname, './ressources/landscape-3779159_960_720.jpg'),
+        path.resolve(__dirname, './ressources/gnu.txt'),
+        {   // Upload a buffer
+            name: "test buffer",
+            buffer: Buffer.from("THIS IS A TEST BUFFER")
+        },
+        {   // upload a stream
+            name: "test stream from file",
+            stream: fs.createReadStream(path.resolve(__dirname, './ressources/water-lily-3784022_960_720.jpg')),
+            size: fs.statSync(path.resolve(__dirname, './ressources/water-lily-3784022_960_720.jpg')).size
+        }
+    ]
+
+    const myUpload = upload('', '', toUpload, 'Hello World', 'en')
+    .on('progress', (progress) => console.log('PROGRESS', progress))
+    .on('end', (end) => console.log('END', end))
+    .on('error', (error) => console.error('ERROR', error));
+
+    setTimeout(function(){
+        myUpload.cancel();
+    }, 10000);
+```
+
+## Upload using node-wetransfer Payload Wrapper
+``` javascript
+    const Payload = require('wetransfert').Payload
+
+    const toUpload = [
+        new Payload({filePath: path.resolve(__dirname, './ressources/flower-3876195_960_720.jpg')}),
+        new Payload({filePath: path.resolve(__dirname, './ressources/landscape-3779159_960_720.jpg')}),
+        new Payload({
+          filePath: path.resolve(__dirname, './ressources/gnu.txt'),
+          name: "gnu_renamed.txt" // Overide file name
+        }),
+        new Payload({   // Upload a buffer
+            name: "test buffer",
+            buffer: Buffer.from("THIS IS A TEST BUFFER")
+        }),
+        new Payload({   // upload a stream
+            name: "test stream from file",
+            stream: fs.createReadStream(path.resolve(__dirname, './ressources/water-lily-3784022_960_720.jpg')),
+            size: fs.statSync(path.resolve(__dirname, './ressources/water-lily-3784022_960_720.jpg')).size
+        })
+    ]
+
+    const myUpload = upload('', '', toUpload, 'Hello World', 'en')
+    .on('progress', (progress) => console.log('PROGRESS', progress))
+    .on('end', (end) => console.log('END', end))
+    .on('error', (error) => console.error('ERROR', error));
+
+    setTimeout(function(){
+        myUpload.cancel();
+    }, 10000);
+```
+
+> /!\ If you want tu upload from a Stream you must provide le steam length. It is mandatory from wetransfer
+
 ## Progress object
 ``` json
 {
@@ -68,7 +132,33 @@ The upload function expose an event emitter and will trigger 3 event :
 - remaining: The remaining seconds to finish (3 decimals)
 
 ## End object
-The end object is the same as the download response object or the get info response object
+``` json
+{
+    "id": "f657a4d4dfda8285b871c268621e70ac20190105125429",
+    "state": "downloadable",
+    "transfer_type": 4,
+    "shortened_url": "https://we.tl/t-332ONV4tUJ",
+    "expires_at": "2019-01-12T12:54:36Z",
+    "password_protected": false,
+    "uploaded_at": "2019-01-05T12:54:36Z",
+    "expiry_in_seconds": 604792,
+    "size": 462915,
+    "deleted_at": null,
+    "recipient_id": null,
+    "security_hash": "86876f",
+    "description": "Hi this is an upload from https://github.com/orgrimarr/node-wetransfert API",
+    "items": [{
+            "id": "aa05a51ab020f28d95aadd21031f63c020190105125429",
+            "name": "flower-3876195_960_720.jpg",
+            "retries": 0,
+            "size": 147377,
+            "previewable": true,
+            "content_identifier": "file"
+        },
+        ...
+    ]
+}
+```
 
 ## Upload without email
 
@@ -103,6 +193,25 @@ download(myUrl, myDestinationFolder)
     console.error('error  ', err);
   });
 ```
+
+# Download weTransfer content from url + pipe response
+### downloadPipe(url)
+
+This function take a valid wetransfer url
+
+It return a Promise and resolve a ReadableStream you can pipe. This stream come from [request-progress](https://www.npmjs.com/package/request-progress). So you can listen for progress while piping
+
+## Exemple 
+``` javascript
+downloadPipe(response.shortened_url)
+  .then(files => {
+      files.pipe(fs.createWriteStream("/home/orgrimarr/wetransfer/myDownload.zip"))
+  })
+  .catch(console.error)
+```
+
+> /!\ If your transfer contain only one file, wetransfer does not zip the content. Be carefull when using the downloadPipe function. You can obtain all files information using the getInfo function. 
+
 
 # Get information about weTransfert url
 
