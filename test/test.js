@@ -5,8 +5,16 @@ const path = require('path')
 const testSamples = [
     path.resolve(__dirname, './ressources/flower-3876195_960_720.jpg'),
     path.resolve(__dirname, './ressources/landscape-3779159_960_720.jpg'),
-    path.resolve(__dirname, './ressources/water-lily-3784022_960_720.jpg'),
     path.resolve(__dirname, './ressources/gnu.txt'),
+    {
+        name: "test buffer",
+        buffer: Buffer.from("THIS IS A TEST BUFFER")
+    },
+    {
+        name: "test stream from file",
+        stream: fs.createReadStream(path.resolve(__dirname, './ressources/water-lily-3784022_960_720.jpg')),
+        size: fs.statSync(path.resolve(__dirname, './ressources/water-lily-3784022_960_720.jpg')).size
+    }
 ]
 
 /////// DOWNLOAD SECTION ////////
@@ -47,6 +55,7 @@ const testDownload = function(){
 }
 
 const testDownloadPipe = function(){
+    const destName = `download_${Math.floor(Math.random() * 1000)}.zip`
     testUpload('', '', testSamples, body, 'en')
     .then(waitForDownloadable)
     .then(response => {
@@ -55,10 +64,10 @@ const testDownloadPipe = function(){
         return downloadPipe(response.shortened_url)
     })
     .then(files => {
-        files.pipe(fs.createWriteStream(path.resolve(downloadFolder, `download_${Math.floor(Math.random() * 1000)}.zip`)))
+        files.pipe(fs.createWriteStream(path.resolve(downloadFolder, destName)))
     })
     .then(done => {
-        console.log("testDownloadPipe DONE", done || "")
+        console.log("testDownloadPipe DONE", done || "", destName)
     })
     .catch(console.error)
 }

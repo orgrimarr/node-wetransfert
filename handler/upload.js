@@ -1,17 +1,16 @@
-const {createReadStream, existsSync, statSync } = require('fs');
-const { basename }      = require('path');
-const EventEmitter      = require('events');
-const requestPromise    = require('request-promise');
-
+const path              = require('path')
+const EventEmitter      = require('events')
+const requestPromise    = require('request-promise')
+const Payload           = require('./Payload')
 
 class Upload extends EventEmitter {
-    constructor(mailFrom= '', mailRecipients = '', filePaths = [], message = '', ui_language = 'en') {
+    constructor(mailFrom= '', mailRecipients = '', payloads = [], message = '', ui_language = 'en') {
         super();
         this.apiVersion = "v4"
         this.id = '';
         this.mailFrom = mailFrom;
         this.mailRecipients = mailRecipients;
-        this.filePaths = filePaths;
+        this.payloads = payloads;
         this.message = message;
         this.ui_language = ui_language;
         this.fileToUpload = {};
@@ -56,27 +55,48 @@ class Upload extends EventEmitter {
                     }
                 }
             }
+
             const knowFileName = new Set();
-            for (let i of this.filePaths) {
-                if (!existsSync(i)) {
-                    return this.emit('error', `File "${i}" does not exist`);
+            for (let payload of this.payloads) {
+                // Case Payload is already a Payload instance
+                if(payload instanceof Payload){
+                    if(!knowFileName.has(payload.name)){
+                        knowFileName.add(payload.name);
+                    }
+                    else{
+                        return this.emit('error', `Error duplicate file name ${payload.name}`);
+                    }
+                    this.fileToUpload[payload.name] = payload
+                    continue
                 }
-                const fileSize = statSync(i).size;
-                if(fileSize < 1){
-                    return this.emit('error', `File "${i}" size cant be null`);
+
+                // Case Payload is path
+                if(typeof payload === "string"){
+                    const curPayload = new Payload({
+                        filePath: payload
+                    })
+                    if(!knowFileName.has(curPayload.name)){
+                        knowFileName.add(curPayload.name);
+                    }
+                    else{
+                        return this.emit('error', `Error duplicate file name ${curPayload.name}`);
+                    }
+                    this.fileToUpload[curPayload.name] = curPayload
+                    continue
                 }
-                const name = basename(i);
-                if(typeof name === 'string' && !knowFileName.has(name)){
-                    knowFileName.add(name);
+
+                // Case object definition
+                if(typeof payload === "object"){
+                    const curPayload = new Payload(payload)
+                    if(!knowFileName.has(curPayload.name)){
+                        knowFileName.add(curPayload.name);
+                    }
+                    else{
+                        return this.emit('error', `Error duplicate file name ${curPayload.name}`);
+                    }
+                    this.fileToUpload[curPayload.name] = curPayload
+                    continue
                 }
-                else{
-                    return this.emit('error', `Bad file ${i} or ${name} is already present`);
-                }
-                this.fileToUpload[name]= {
-                    name: name,
-                    path: i,
-                    size: fileSize
-                };
             }
             if(knowFileName.length < 1){
                 return this.emit('error', 'you must provide at least one file');
@@ -87,7 +107,7 @@ class Upload extends EventEmitter {
             this.startTime = Date.now();
 
             for(let i in this.fileToUpload){
-                this.totalSizeToUpload += this.fileToUpload[i].size;
+                this.totalSizeToUpload += typeof this.fileToUpload[i].size !== "number" ? parseInt(this.fileToUpload[i].size, 10) : this.fileToUpload[i].size
             }
             if(this.totalSizeToUpload > 2147483648){
                 return this.emit('error', `Total fileSize cant exeed 2Gibibyte, your total size is ${this.totalSizeToUpload} Byte only accept 2147483648 Byte`);
@@ -119,10 +139,10 @@ class Upload extends EventEmitter {
                         id: fileAttr.id,
                         name: currentFile.name,
                         chunk_size: fileAttr.chunk_size,
-                        "path": currentFile.path,
-                        "size": currentFile.size
+                        stream: currentFile.stream,
+                        size: currentFile.size
                     }
-                );
+                )
             }
             const finalRes = await this.finalize();
             return this.emit('end', finalRes);
@@ -232,17 +252,17 @@ class Upload extends EventEmitter {
     }
 
     // PerFile functions
-    uploadFileWF(currestFileObject) {
+    uploadFileWF(currentPayload) {
         if(this.isCanceled){
             return Promise.reject('Job Altready canceled in _uploadFileWF');
         }
         return new Promise(async (resolve, reject) => {
             const fileObj = {
-                path: currestFileObject.path,
-                name: currestFileObject.name,
-                id: currestFileObject.id,
-                chunk_size: currestFileObject.chunk_size,
-                size: currestFileObject.size
+                stream: currentPayload.stream,
+                name: currentPayload.name,
+                id: currentPayload.id,
+                chunk_size: currentPayload.chunk_size,
+                size: currentPayload.size
             }
             let uploadFileStream = null;
             try {
@@ -273,7 +293,7 @@ class Upload extends EventEmitter {
                 }
 
                 //const neededChunk = fileObj.size > fileObj.chunk_size ? Math.floor(fileObj.size / fileObj.chunk_size) + 1 : 1;
-                uploadFileStream = createReadStream(fileObj.path)
+                fileObj.stream
                     .on('data', async (chunk) => {
                         try {
                             receivedBuffers.push(chunk);
@@ -442,6 +462,6 @@ class Upload extends EventEmitter {
 
 
 
-exports.upload = function(mailFrom, mailRecipients, filePaths, message, ui_language){
-    if (!(this instanceof Upload)) return new Upload(mailFrom, mailRecipients, filePaths, message, ui_language);
+exports.upload = function(mailFrom, mailRecipients, payloads, message, ui_language){
+    if (!(this instanceof Upload)) return new Upload(mailFrom, mailRecipients, payloads, message, ui_language);
 };
