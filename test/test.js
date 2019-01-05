@@ -1,4 +1,4 @@
-const { getInfo, isValidWetransfertUrl, download, downloadPipe ,upload, waitForDownloadable } = require('../index');
+const { getInfo, isValidWetransfertUrl, download, downloadPipe ,upload, waitForDownloadable, Payload } = require('../index');
 const fs = require('fs')
 const path = require('path')
 
@@ -6,6 +6,14 @@ const testSamples = [
     path.resolve(__dirname, './ressources/flower-3876195_960_720.jpg'),
     path.resolve(__dirname, './ressources/landscape-3779159_960_720.jpg'),
     path.resolve(__dirname, './ressources/gnu.txt'),
+    new Payload({
+        filePath: path.resolve(__dirname, './ressources/gnu.txt'),
+        name: "gnu_renamed.txt" // Overide file name
+    }),
+    new Payload({   // Upload a buffer
+        name: "test buffer with payload wrapper",
+        buffer: Buffer.from("THIS IS A TEST BUFFER WRAPPED WITHIN wetransfert PAYLOAD")
+    }),
     {
         name: "test buffer",
         buffer: Buffer.from("THIS IS A TEST BUFFER")
@@ -56,7 +64,7 @@ const testDownload = function(){
 
 const testDownloadPipe = function(){
     const destName = `download_${Math.floor(Math.random() * 1000)}.zip`
-    testUpload('', '', testSamples, body, 'en')
+    testUpload('', '', testSamples[0], body, 'en')
     .then(waitForDownloadable)
     .then(response => {
         console.log("response", JSON.stringify(response, null, 2))

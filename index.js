@@ -4,7 +4,7 @@ exports.getInfo                     = require('./handler/getInfo').getInfo;
 exports.download                    = require('./handler/download').download;
 exports.downloadPipe                = require('./handler/download').downloadPipe
 exports.upload                      = require('./handler/upload').upload;
-
+exports.Payload                     = require('./handler/Payload')
 
 
 

@@ -75,6 +75,38 @@ The upload function expose an event emitter and will trigger 3 event :
     }, 10000);
 ```
 
+## Upload using node-wetransfer Payload Wrapper
+``` javascript
+    const Payload = require('wetransfert').Payload
+
+    const toUpload = [
+        new Payload({filePath: path.resolve(__dirname, './ressources/flower-3876195_960_720.jpg')}),
+        new Payload({filePath: path.resolve(__dirname, './ressources/landscape-3779159_960_720.jpg')}),
+        new Payload({
+          filePath: path.resolve(__dirname, './ressources/gnu.txt'),
+          name: "gnu_renamed.txt" // Overide file name
+        }),
+        new Payload({   // Upload a buffer
+            name: "test buffer",
+            buffer: Buffer.from("THIS IS A TEST BUFFER")
+        }),
+        new Payload({   // upload a stream
+            name: "test stream from file",
+            stream: fs.createReadStream(path.resolve(__dirname, './ressources/water-lily-3784022_960_720.jpg')),
+            size: fs.statSync(path.resolve(__dirname, './ressources/water-lily-3784022_960_720.jpg')).size
+        })
+    ]
+
+    const myUpload = upload('', '', toUpload, 'Hello World', 'en')
+    .on('progress', (progress) => console.log('PROGRESS', progress))
+    .on('end', (end) => console.log('END', end))
+    .on('error', (error) => console.error('ERROR', error));
+
+    setTimeout(function(){
+        myUpload.cancel();
+    }, 10000);
+```
+
 > /!\ If you want tu upload from a Stream you must provide le steam length. It is mandatory from wetransfer
 
 ## Progress object

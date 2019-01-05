@@ -10,6 +10,9 @@ class Upload extends EventEmitter {
         this.id = '';
         this.mailFrom = mailFrom;
         this.mailRecipients = mailRecipients;
+        if(!Array.isArray(payloads)){
+            payloads = [payloads]
+        }
         this.payloads = payloads;
         this.message = message;
         this.ui_language = ui_language;
