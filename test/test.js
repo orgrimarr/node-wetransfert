@@ -50,12 +50,12 @@ const testDownloadPipe = function(){
     testUpload('', '', testSamples, body, 'en')
     .then(waitForDownloadable)
     .then(response => {
-        console.log("response", response)
+        console.log("response", JSON.stringify(response, null, 2))
         console.log('>>> response.shortened_url', response.shortened_url)
         return downloadPipe(response.shortened_url)
     })
     .then(files => {
-        files.pipe(fs.createWriteStream(path.resolve(downloadFolder, `download_${(Math.random() * 1000)}.zip`)))
+        files.pipe(fs.createWriteStream(path.resolve(downloadFolder, `download_${Math.floor(Math.random() * 1000)}.zip`)))
     })
     .then(done => {
         console.log("testDownloadPipe DONE", done || "")

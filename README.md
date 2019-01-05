@@ -71,7 +71,33 @@ The upload function expose an event emitter and will trigger 3 event :
 - remaining: The remaining seconds to finish (3 decimals)
 
 ## End object
-The end object is the same as the download response object or the get info response object
+``` json
+{
+    "id": "f657a4d4dfda8285b871c268621e70ac20190105125429",
+    "state": "downloadable",
+    "transfer_type": 4,
+    "shortened_url": "https://we.tl/t-332ONV4tUJ",
+    "expires_at": "2019-01-12T12:54:36Z",
+    "password_protected": false,
+    "uploaded_at": "2019-01-05T12:54:36Z",
+    "expiry_in_seconds": 604792,
+    "size": 462915,
+    "deleted_at": null,
+    "recipient_id": null,
+    "security_hash": "86876f",
+    "description": "Hi this is an upload from https://github.com/orgrimarr/node-wetransfert API",
+    "items": [{
+            "id": "aa05a51ab020f28d95aadd21031f63c020190105125429",
+            "name": "flower-3876195_960_720.jpg",
+            "retries": 0,
+            "size": 147377,
+            "previewable": true,
+            "content_identifier": "file"
+        },
+        ...
+    ]
+}
+```
 
 ## Upload without email
 
@@ -106,6 +132,25 @@ download(myUrl, myDestinationFolder)
     console.error('error  ', err);
   });
 ```
+
+# Download weTransfer content from url + pipe response
+### downloadPipe(url)
+
+This function take a valid wetransfer url
+
+It return a Promise and resolve a ReadableStream you can pipe. This stream come from [request-progress](https://www.npmjs.com/package/request-progress). So you can listen for progress while piping
+
+## Exemple 
+``` javascript
+downloadPipe(response.shortened_url)
+  .then(files => {
+      files.pipe(fs.createWriteStream("/home/orgrimarr/wetransfer/myDownload.zip"))
+  })
+  .catch(console.error)
+```
+
+> /!\ If your transfer contain only one file, wetransfer does not zip the content. Be carefull when using the downloadPipe function. You can obtain all files information using the getInfo function. 
+
 
 # Get information about weTransfert url
 
