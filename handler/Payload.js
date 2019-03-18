@@ -1,6 +1,7 @@
 const {createReadStream, existsSync, statSync } = require('fs')
 const ReadableStream    = require('stream').Readable
 const path              = require('path')
+const debug             = require('debug')("wetransfert:Payload")
 
 
 /**
@@ -34,6 +35,7 @@ class Payload{
     
             // If a file path is provide
             if(filePath !== null){
+                debug("file payload")
                 filePath = path.resolve(filePath)
                 if (!existsSync(filePath)) {
                     throw new Error(`Payload::Error File "${filePath}" does not exist`)
@@ -49,6 +51,9 @@ class Payload{
                 }
     
                 this.stream = createReadStream(filePath)
+                debug(`create file read stream ok. ${filePath}`)
+                debug("filename: " + this.name)
+                debug("filesize: " + this.size)
             }
     
             // Mandatory file Name
@@ -62,6 +67,7 @@ class Payload{
     
             // If upload from a NodeJS Buffer
             if(buffer !== null){
+                debug(" buffer payload")
                 if(!Buffer.isBuffer(buffer)){
                     throw new Error("Payload::Error buffer must be a Buffer object")
                 }
@@ -72,10 +78,15 @@ class Payload{
                 this.stream._read = () => {}
                 this.stream.push(buffer)            // Push buffer to Stream
                 this.stream.push(null)              // EOF
+
+                debug(`create buffer read stream ok`)
+                debug("filename: " + this.name)
+                debug("filesize" + this.size)
             }
 
             // If upload from stream
             if(stream !== null){
+                debug("stream payload")
                 if(!(stream instanceof ReadableStream)){
                     throw new Error("Payload::Error stream must be an instance of stream.Readable. See https://nodejs.org/api/stream.html#stream_class_stream_readable")
                 }
@@ -90,6 +101,10 @@ class Payload{
                 }
 
                 this.stream = stream
+
+                debug(`using existing stream`)
+                debug("filename: " + this.name)
+                debug("filesize" + this.size)
             }
         }
         catch(error){
@@ -97,7 +112,10 @@ class Payload{
                 try{
                     this.stream.destroy(error)
                 }
-                catch(e){}
+                catch(e){
+                    debug(e)
+                    debug(e.message)
+                }
             }
             throw error
         }

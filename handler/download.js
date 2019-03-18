@@ -2,7 +2,7 @@ const { getInfo }   = require('./getInfo');
 const PProgress     = require('../utils/PProgress');
 const ReqProgress   = require('request-progress');
 const request       = require('request');
-//const fstream       = require('fstream');
+const debug         = require('debug')("wetransfert:download")
 const mkdirp        = require('mkdirp');
 const unzip         = require('unzipper');
 const path          = require('path');
@@ -77,10 +77,10 @@ exports.download = function(url = '', destPath= null){
 */
 exports.downloadPipe = async function(url = ''){
     try{
-        console.log("downloadPipe", url)
+        debug("downloadPipe", url)
         const weTransfertObject = await getInfo(url);
-        console.log("weTransfertObject", weTransfertObject)
-        console.log("weTransfertObject.downloadURI", weTransfertObject.downloadURI)
+        debug("weTransfertObject", weTransfertObject)
+        debug("weTransfertObject.downloadURI", weTransfertObject.downloadURI)
         if(!weTransfertObject) {
             throw new Error('Not a valid url');
         }

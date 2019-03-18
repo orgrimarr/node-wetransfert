@@ -1,5 +1,6 @@
 const cheerio = require('cheerio');
 const request = require('request-promise');
+const debug   = require('debug')("wetransfert:getinfos")
 const {
     isValidWetransfertUrl,
     formatDownloadApiUri,
@@ -38,6 +39,7 @@ const extractScriptContent = function (body) { // Return a list of var
 
 const getContentInfo = function (urlObj) {
     return new Promise((resolve, reject) => {
+        debug(`getContentInfo: GET ${urlObj.href}`)
         request({
                 method: 'GET',
                 uri: urlObj.href,
@@ -60,6 +62,7 @@ const getDownloadUri = function (urlObj) {
     return new Promise(async (resolve, reject) => {
         try {
             const requestParams = await formatDownloadApiUri(urlObj);
+            debug(`getDownloadUri: POST ${requestParams.uri}  ${JSON.stringify(requestParams.body)}`)
             const data = await request({
                 method: 'POST',
                 uri: requestParams.uri,
@@ -118,7 +121,7 @@ const waitForDownloadable = async function (responseObj) {
             return responseObj.content || responseObj
         }
         else{
-            console.log("node-wetransfert: wait 5s for downloadable state")
+            debug("node-wetransfert: wait 5s for downloadable state")
             await waitAsync(5000)
             const infos = await(getInfo(responseObj.shortened_url || (typeof responseObj.content === "object" ? responseObj.content.shortened_url : undefined)))
             return waitForDownloadable(infos)

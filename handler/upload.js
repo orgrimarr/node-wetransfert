@@ -2,6 +2,7 @@ const path              = require('path')
 const EventEmitter      = require('events')
 const requestPromise    = require('request-promise')
 const Payload           = require('./Payload')
+const debug             = require('debug')("wetransfert:upload")
 
 class Upload extends EventEmitter {
     constructor(mailFrom= '', mailRecipients = '', payloads = [], message = '', ui_language = 'en') {
@@ -27,11 +28,13 @@ class Upload extends EventEmitter {
         });
         this.on('error', (e) =>{
             this.fatalError = true;
+            debug(`/!\\ fatalError: ${e.message || e}`)
             if(!this.isCanceled){
                 this.cancelJob(e);
             }
         });
         this.on('end',  () =>{
+            debug("upload progress: 1")
             this.emit('progress', 1);
         });
 
@@ -59,6 +62,9 @@ class Upload extends EventEmitter {
                 }
             }
 
+            debug(`from: ${this.mailFrom}`)
+            debug(`from: ${Array.isArray(this.mailRecipients) ? this.mailRecipients.join(', ') : this.mailRecipients}`)
+
             const knowFileName = new Set();
             for (let payload of this.payloads) {
                 // Case Payload is already a Payload instance
@@ -70,6 +76,7 @@ class Upload extends EventEmitter {
                         return this.emit('error', `Error duplicate file name ${payload.name}`);
                     }
                     this.fileToUpload[payload.name] = payload
+                    debug(`addPaload: type:PayloadObject name:${payload.name}`)
                     continue
                 }
 
@@ -85,6 +92,7 @@ class Upload extends EventEmitter {
                         return this.emit('error', `Error duplicate file name ${curPayload.name}`);
                     }
                     this.fileToUpload[curPayload.name] = curPayload
+                    debug(`addPaload: type:path name:${curPayload.name}`)
                     continue
                 }
 
@@ -98,12 +106,16 @@ class Upload extends EventEmitter {
                         return this.emit('error', `Error duplicate file name ${curPayload.name}`);
                     }
                     this.fileToUpload[curPayload.name] = curPayload
+                    debug(`addPaload: type:ObjectDefinition name:${curPayload.name}`)
                     continue
                 }
+
             }
             if(knowFileName.length < 1){
                 return this.emit('error', 'you must provide at least one file');
             }
+
+            debug(`${knowFileName.size} file to upload`)
 
             this.totalSizeToUpload = 0;
             this.totalSizeUploaded = 0;
@@ -162,6 +174,7 @@ class Upload extends EventEmitter {
         return re.test(email);
     }
     formatRequestOption(method, url, body) {
+        debug(`formatRequestOption ${method} ${url}`)
         return {
             method: method,
             uri: url,
@@ -182,7 +195,7 @@ class Upload extends EventEmitter {
     // WF
     emailRequest() {
         if(this.isCanceled){
-            return Promise.reject('Job Altready canceled in _emailRequest');
+            return Promise.reject('Job Already canceled in _emailRequest');
         }
         const fileNames = [];
         for(let i in this.fileToUpload){
@@ -201,6 +214,7 @@ class Upload extends EventEmitter {
         }
 
         return new Promise((resolve, reject) => {
+            debug("emailRequest")
             this.requestCue.emailRequest = requestPromise(this.formatRequestOption('POST', url, body))
             .then((res) =>{
                 return resolve(res);
@@ -211,9 +225,10 @@ class Upload extends EventEmitter {
     }
     finalize() {
         if(this.isCanceled){
-            return Promise.reject('Job Altready canceled in _finalize');
+            return Promise.reject('Job Already canceled in _finalize');
         }
         return new Promise((resolve, reject) => {
+            debug(`finalize`)
             this.requestCue.finalize = requestPromise(this.formatRequestOption(
                 'PUT',
                 `https://wetransfer.com/api/${this.apiVersion}/transfers/${this.id}/finalize`
@@ -226,6 +241,7 @@ class Upload extends EventEmitter {
         });
     }
     cancelJob(error){
+        debug("cancelJob")
         this.isCanceled = true
         for(let i in this.requestCue){
             try{
@@ -257,9 +273,10 @@ class Upload extends EventEmitter {
     // PerFile functions
     uploadFileWF(currentPayload) {
         if(this.isCanceled){
-            return Promise.reject('Job Altready canceled in _uploadFileWF');
+            return Promise.reject('Job Already canceled in _uploadFileWF');
         }
         return new Promise(async (resolve, reject) => {
+            debug("start uploadFileWF")
             const fileObj = {
                 stream: currentPayload.stream,
                 name: currentPayload.name,
@@ -317,6 +334,8 @@ class Upload extends EventEmitter {
                                     this.totalProgress.size.transferred = this.totalSizeUploaded;
                                     const now = Date.now();
                                     this.totalProgress.time.elapsed += (now - this.startTime);
+
+                                    debug("upload progress: " + this.totalProgress)
                                     this.emit('progress', this.totalProgress);
                                 }
                                 uploadFileStream.resume();
@@ -343,6 +362,8 @@ class Upload extends EventEmitter {
                                 this.totalProgress.size.transferred = this.totalSizeUploaded;
                                 const now = Date.now();
                                 this.totalProgress.time.elapsed += (now - this.startTime);
+
+                                debug("upload progress: " + this.totalProgress)
                                 this.emit('progress', this.totalProgress);
                             }
                             const final = await this.finalizeFile(fileObj.id, currentChunkOffset);
@@ -366,10 +387,11 @@ class Upload extends EventEmitter {
     }
     fileRequest(filename, chunk_size) {
         if(this.isCanceled){
-            return Promise.reject('Job Altready canceled in _fileRequest');
+            return Promise.reject('Job Already canceled in _fileRequest');
         }
 
         return new Promise((resolve, reject) => {
+            debug(`fileRequest name:${filename} size:${chunk_size}`)
             this.requestCue.fileRequest = requestPromise(this.formatRequestOption(
                 'POST',
                 `https://wetransfer.com/api/${this.apiVersion}/transfers/${this.id}/files`, {
@@ -386,9 +408,10 @@ class Upload extends EventEmitter {
     }
     chunkRequest(fileID, chunk_number, chunk_size, retries) {
         if(this.isCanceled){
-            return Promise.reject('Job Altready canceled in _chunkRequest');
+            return Promise.reject('Job Already canceled in _chunkRequest');
         }
         return new Promise((resolve, reject) => {
+            debug(`chunkRequest id:${fileID} chunk:${chunk_number} size:${chunk_size} retries:${retries}`)
             this.requestCue.chunkRequest = requestPromise(this.formatRequestOption(
                 'PUT',
                 `https://wetransfer.com/api/${this.apiVersion}/transfers/${this.id}/files/${fileID}`, {
@@ -406,7 +429,7 @@ class Upload extends EventEmitter {
     }
     s3upload(template, fileName, uploadBuffer, chunk_number) {
         if(this.isCanceled){
-            return Promise.reject('Job Altready canceled in _s3upload');
+            return Promise.reject('Job Already canceled in _s3upload');
         }
         try {
             const options = {
@@ -429,6 +452,8 @@ class Upload extends EventEmitter {
                 }
             };
 
+            debug(`s3upload: id:${fileId} name: ${fileName} chunk:${chunk_number}`)
+
             return new Promise((resolve, reject) => {
                 this.requestCue.s3upload = requestPromise(options)
                 .then((res) =>{
@@ -443,9 +468,10 @@ class Upload extends EventEmitter {
     }
     finalizeFile(fileId, chunk_number) {
         if(this.isCanceled){
-            return Promise.reject('Job Altready canceled in _finalizeFile');
+            return Promise.reject('Job Already canceled in _finalizeFile');
         }
         return new Promise((resolve, reject) => {
+            debug(`finalizeFile: id:${fileId} chunk:${chunk_number}`)
             this.requestCue.finalizeFile = requestPromise(this.formatRequestOption(
                 'PUT',
                 `https://wetransfer.com/api/${this.apiVersion}/transfers/${this.id}/files/${fileId}/finalize`, {

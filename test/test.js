@@ -1,3 +1,4 @@
+process.env.DEBUG = "*"
 const { getInfo, isValidWetransfertUrl, download, downloadPipe ,upload, waitForDownloadable, Payload } = require('../index');
 const fs = require('fs')
 const path = require('path')
@@ -94,6 +95,7 @@ const testUpload = function(sender = emailSender, receiver = reveiverSender, toU
         });
     
         if(cancel > 0){
+            console.log("cance upload !")
             setTimeout(function(){
                 myUpload.cancel();
             }, cancel);
@@ -105,7 +107,10 @@ const testUploadLink = function(){
     const myUpload = upload('', '', filesToUpload, body, language)
     .on('progress', (progress) => console.log('PROGRESS', progress))
     .on('end', (end) => console.log('END', end))
-    .on('error', (error) => console.error('ERROR', error));
+    .on('error', (error) => {
+         console.error('ERROR', error.message)
+         console.error(error.error)
+    });
 }
 
 
@@ -113,9 +118,9 @@ const testUploadLink = function(){
 // Uncomment 
 
 //testDownload();
-testDownloadPipe()
+// testDownloadPipe()
 //testUpload();
-//testUploadLink()
+testUploadLink()
 
 // getInfo("https://we.tl/t-l9lCzgnmcp")
 // .then(response =>  {
