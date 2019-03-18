@@ -286,3 +286,9 @@ If not, it return false
 
 
 Don't hesitate to give your feedback on github and let me know of any bug you might encounter
+
+if you have any issue please use the debug mode before open an issue
+``` javascript
+// Juste add the begining of your script
+process.env.DEBUG = "wetransfert*"
+```

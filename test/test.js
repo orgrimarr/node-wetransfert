@@ -1,4 +1,4 @@
-process.env.DEBUG = "*"
+process.env.DEBUG = "wetransfert*"
 const { getInfo, isValidWetransfertUrl, download, downloadPipe ,upload, waitForDownloadable, Payload } = require('../index');
 const fs = require('fs')
 const path = require('path')
@@ -37,7 +37,7 @@ const downloadFolder = path.resolve(__dirname, './tmp')
 const emailSender = 'mail@sender.com'
 // Reveiver Mails, An array of all reveiver emails: ex: ['mail1@receiver.com', 'mail2@receiver.com']
 const reveiverSender = ['mail1@receiver.com', 'mail2@receiver.com']
-// An array of file you want to upload. Ex : ['/home/orgrimarr/wetransfer/file1', '/home/orgrimarr/wetransfer/file2']
+// An array of file you want to uconsolepload. Ex : ['/home/orgrimarr/wetransfer/file1', '/home/orgrimarr/wetransfer/file2']
 const filesToUpload = testSamples //['/home/orgrimarr/wetransfer/file1', '/home/orgrimarr/wetransfer/file2']
 // The body of the email
 const body = 'Hi this is an upload from https://github.com/orgrimarr/node-wetransfert API'
@@ -86,11 +86,9 @@ const testUpload = function(sender = emailSender, receiver = reveiverSender, toU
         const myUpload = upload(sender, receiver, toUpload, content, lang)
         .on('progress', (progress) => console.log('PROGRESS', progress))
         .on('end', (end) => {
-            console.log('END', end)
             return resolve(end)
         })
         .on('error', (error) => {
-            console.error('ERROR', error)
             return reject(error)
         });
     
@@ -108,8 +106,8 @@ const testUploadLink = function(){
     .on('progress', (progress) => console.log('PROGRESS', progress))
     .on('end', (end) => console.log('END', end))
     .on('error', (error) => {
-         console.error('ERROR', error.message)
-         console.error(error.error)
+        if(error) console.error('ERROR', error.message)
+        console.log("error", error)
     });
 }
 

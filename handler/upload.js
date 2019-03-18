@@ -28,7 +28,9 @@ class Upload extends EventEmitter {
         });
         this.on('error', (e) =>{
             this.fatalError = true;
-            debug(`/!\\ fatalError: ${e.message || e}`)
+            if(e) debug(`/!\\ fatalError: ${e.message}`)
+            debug(`/!\\ fatalError: ${e}`)
+
             if(!this.isCanceled){
                 this.cancelJob(e);
             }
@@ -174,7 +176,7 @@ class Upload extends EventEmitter {
         return re.test(email);
     }
     formatRequestOption(method, url, body) {
-        debug(`formatRequestOption ${method} ${url}`)
+        debug(`formatRequestOption ${method} ${url} ${JSON.stringify(body)}`)
         return {
             method: method,
             uri: url,
@@ -197,21 +199,29 @@ class Upload extends EventEmitter {
         if(this.isCanceled){
             return Promise.reject('Job Already canceled in _emailRequest');
         }
-        const fileNames = [];
+
+        const files = []
         for(let i in this.fileToUpload){
-            fileNames.push(i);
+            files.push({
+                name: this.fileToUpload[i].name,
+                size: this.fileToUpload[i].size
+            })
         }
+        
+
         let url = `https://wetransfer.com/api/${this.apiVersion}/transfers/link`
         let body = {
-                "message": typeof this.message === 'string' ? this.message : '',
-                "ui_language": typeof this.ui_language === 'string' ? this.ui_language : 'en',
-                "filenames": fileNames
+                message:        typeof this.message === 'string' ? this.message : '',
+                ui_language:    typeof this.ui_language === 'string' ? this.ui_language : 'en',
+                files:          files
             }
         if (this.mailFrom !== '' || this.mailRecipients !== '') {
             body.recipients = this.mailRecipients;
             body.from = this.mailFrom;
             url = `https://wetransfer.com/api/${this.apiVersion}/transfers/email`
         }
+        // Link upload
+        
 
         return new Promise((resolve, reject) => {
             debug("emailRequest")
@@ -219,6 +229,7 @@ class Upload extends EventEmitter {
             .then((res) =>{
                 return resolve(res);
             }, (err) => {
+                if(err) debug(`emailRequest error: ${err.message}`)
                 return reject(err);
             })
         });
@@ -236,6 +247,7 @@ class Upload extends EventEmitter {
             .then((res) =>{
                 return resolve(res);
             }, (err) => {
+                if(err) debug(`finalize error: ${err.message}`)
                 return reject(err);
             })
         });
@@ -343,6 +355,8 @@ class Upload extends EventEmitter {
                             return 'ok';
                         } catch (e) {
                             uploadFileStream.destroy();
+
+                            if(e) debug(`uploadFileWf data error: ${e.message}`);
                             return reject(e.message);
                         }
                     })
@@ -370,10 +384,12 @@ class Upload extends EventEmitter {
                             return resolve(final);
                         }
                         catch(e){
-                            return reject(e.message);
+                            if(e) debug(`uploadFileWf end error: ${e.message}`)
+                            return reject(e);
                         }
                     })
                     .on('error', (err) => {
+                        if(err) debug(`uploadFileWf on error: ${err.message}`)
                         return reject( err.error || err);
                     });
 
@@ -381,6 +397,7 @@ class Upload extends EventEmitter {
                 if(uploadFileStream !== null){
                     uploadFileStream.destroy();
                 }
+                if(e) debug(`uploadFileWf final error: ${e.message}`)
                 return reject(e.message);
             }
         });
@@ -402,6 +419,7 @@ class Upload extends EventEmitter {
             .then((res) =>{
                 return resolve(res);
             }, (err) => {
+                if(err) debug(`fileRequest error: ${err.message}`)
                 return reject(err);
             })
         });
@@ -423,6 +441,7 @@ class Upload extends EventEmitter {
             .then((res) =>{
                 return resolve(res);
             }, (err) => {
+                if(err) debug(`chunkRequest error: ${err.message}`)
                 return reject(err);
             })
         });
@@ -452,17 +471,19 @@ class Upload extends EventEmitter {
                 }
             };
 
-            debug(`s3upload: id:${fileId} name: ${fileName} chunk:${chunk_number}`)
+            debug(`s3upload: name: ${fileName} chunk:${chunk_number}`)
 
             return new Promise((resolve, reject) => {
                 this.requestCue.s3upload = requestPromise(options)
                 .then((res) =>{
                     return resolve(res);
                 }, (err) => {
+                    if(err) debug(`s3Upload error: ${err.message}`)
                     return reject(err);
                 })
             });
         } catch (e) {
+            if(e) debug(`s3Upload error: ${e.message}`)
             return Promise.reject(e.message);
         }
     }
@@ -481,6 +502,7 @@ class Upload extends EventEmitter {
             .then((res) =>{
                 return resolve(res);
             }, (err) => {
+                if(err) debug(`finalizeFile error: ${err.message}`)
                 return reject(err);
             })
         });
