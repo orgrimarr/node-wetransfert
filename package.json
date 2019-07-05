@@ -1,6 +1,6 @@
 {
   "name": "wetransfert",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Download/Upload wetransfer content with nodeJS - Unofficial API for wetransfer",
   "keywords": [
     "file transfer",
@@ -20,7 +20,8 @@
   ],
   "license": "none",
   "scripts": {
-    "snyk": "./node_modules/.bin/snyk test && ./node_modules/.bin/snyk test > snyk_report.txt"
+    "snyk": "./node_modules/.bin/snyk test && ./node_modules/.bin/snyk test > snyk_report.txt",
+    "test": "snyk test"
   },
   "dependencies": {
     "cheerio": "^1.0.0-rc.2",
@@ -33,6 +34,6 @@
     "xml2js": "^0.4.19"
   },
   "devDependencies": {
-    "snyk": "^1.120.1"
+    "snyk": "^1.192.1"
   }
 }
