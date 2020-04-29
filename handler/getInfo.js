@@ -40,16 +40,25 @@ const extractScriptContent = function (body) { // Return a list of var
 const getContentInfo = function (urlObj) {
     return new Promise((resolve, reject) => {
         debug(`getContentInfo: GET ${urlObj.href}`)
+        let setCookie, csrf;
         request({
                 method: 'GET',
                 uri: urlObj.href,
                 json: false,
-                simple: true,
-                resolveWithFullResponse: false
+                simple: false,
+                resolveWithFullResponse: true
+            })
+            .then((result)=>{
+                setCookie = result.headers['set-cookie']
+                const $ = cheerio.load(result.body);
+                csrf = $("meta[name=csrf-token]").attr('content');
+                return result.body;
             })
             .then(extractScriptContent)
             .then(extractVar)
             .then((content) => {
+                content.setCookie = setCookie;
+                content.csrf = csrf;
                 return resolve(content);
             })
             .catch((err) => {
@@ -58,7 +67,7 @@ const getContentInfo = function (urlObj) {
     });
 }
 
-const getDownloadUri = function (urlObj) {
+const getDownloadUri = function (urlObj, setCookie, csrf) {
     return new Promise(async (resolve, reject) => {
         try {
             const requestParams = await formatDownloadApiUri(urlObj);
@@ -68,7 +77,9 @@ const getDownloadUri = function (urlObj) {
                 uri: requestParams.uri,
                 body: requestParams.body,
                 'headers': {
+                    'cookie': setCookie.filter((c)=>c.indexOf('session')>-1)[0].split(';')[0],
                     'Content-Type': 'application/json',
+                    'x-csrf-token': csrf,
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36'
                 },
                 json: true,
@@ -100,7 +111,7 @@ const getInfo = async function (url) {
                 if (infos.state !== "downloadable") {
                     return formatResult([infos, null])
                 }
-                const downloadURI = await getDownloadUri(URLObject)
+                const downloadURI = await getDownloadUri(URLObject, infos.setCookie, infos.csrf)
                 return formatResult([infos, downloadURI])
             } else {
                 throw new Error(`Unhanle url: ${URLObject.href}`);
