@@ -49,11 +49,9 @@ const getContentInfo = function (urlObj) {
                 resolveWithFullResponse: true
             })
             .then((result)=>{
-                console.log(result.headers);
                 setCookie = result.headers['set-cookie']
                 const $ = cheerio.load(result.body);
                 csrf = $("meta[name=csrf-token]").attr('content');
-
                 return result.body;
             })
             .then(extractScriptContent)
@@ -70,7 +68,6 @@ const getContentInfo = function (urlObj) {
 }
 
 const getDownloadUri = function (urlObj, setCookie, csrf) {
-    console.log(setCookie.filter((c)=>c.indexOf('session')>-1)[0].split(';')[0])
     return new Promise(async (resolve, reject) => {
         try {
             const requestParams = await formatDownloadApiUri(urlObj);
