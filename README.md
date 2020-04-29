@@ -12,6 +12,10 @@ yarn add wetransfert
 ```
 Tested in node 8.x
 
+# Changelog
+- 2.1.3 
+  - Fix dependencies security issues
+  - Fix download (Thanks @cylwin). The upload part is still broken
 
 ## You can require the module like this
 
