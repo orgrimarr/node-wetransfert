@@ -3,6 +3,10 @@
 
  [![Known Vulnerabilities](https://snyk.io/test/github/orgrimarr/node-wetransfert/badge.svg)](https://snyk.io/test/github/orgrimarr/node-wetransfert) 
 
+# Changelog
+- 2.1.3 
+  - Fix dependencies security issues
+  - Fix download (Thanks @cylwin). The upload part is still broken
 
 # Install
 ```
@@ -12,16 +16,120 @@ yarn add wetransfert
 ```
 Tested in node 8.x
 
-# Changelog
-- 2.1.3 
-  - Fix dependencies security issues
-  - Fix download (Thanks @cylwin). The upload part is still broken
 
 ## You can require the module like this
 
 ``` javascript
 const { upload, download, getInfo, isValidWetransfertUrl } = require('wetransfert');
 ```  
+# Download weTransfer content from url
+### download(url, folder)
+The function take a valid wetransfer url and a destination folder
+
+Simply return a [PromiseProgress](https://github.com/sindresorhus/p-progress)
+
+The response is an object describing the [weTransfert content](#response-exemple)
+
+## Exemple
+
+``` javascript
+const { download } = require('wetransfert');
+
+download(myUrl, myDestinationFolder)
+  .onProgress(progress => {
+    console.log('progress', progress);
+  })
+  .then((res) => {
+    console.log(res); // success
+  })
+  .catch((err) => {
+    console.error('error  ', err);
+  });
+```
+
+
+# Download weTransfer content from url + pipe response
+### downloadPipe(url)
+
+This function take a valid wetransfer url
+
+It return a Promise and resolve a ReadableStream you can pipe. This stream come from [request-progress](https://www.npmjs.com/package/request-progress). So you can listen for progress while piping
+
+## Exemple 
+``` javascript
+const { downloadPipe } = require('wetransfert');
+
+downloadPipe(response.shortened_url)
+  .then(files => {
+      files.pipe(fs.createWriteStream("/home/orgrimarr/wetransfer/myDownload.zip"))
+  })
+  .catch(console.error)
+```
+
+> /!\ If your transfer contain only one file, wetransfer does not zip the content. Be carefull when using the downloadPipe function. You can obtain all files information using the getInfo function. 
+
+
+# Get information about weTransfert url
+
+## Exemple
+
+``` javascript
+const { getInfo } = require('wetransfert');
+
+getInfo('myWeTransfertURL')
+    .then((data) => {
+      console.log('success  ', data);
+    })
+    .catch((err) => {
+      console.error('error  ' + err);
+    })
+
+```
+
+## Response Exemple
+
+``` json
+{
+  "content": {
+    "id": "myID",
+    "security_hash": "9cc5646",
+    "state": "downloadable",
+    "transfer_type": 1,
+    "shortened_url": "myShortURI",
+    "title": null,
+    "description": "",
+    "items": [
+      {
+        "id": "myItemID",
+        "content_identifier": "file",
+        "name": "MyFIleName",
+        "size": 30779833462,
+        "previewable": false
+      },
+      {
+
+      }
+    ],
+    "password_protected": false,
+    "per_file_download_available": true,
+    "expires_at": "2017-09-09T10:22:05Z",
+    "uploaded_at": "2017-09-02T10:22:20Z",
+    "deleted_at": null,
+    "size": 31067650,
+    "expiry_in_days": 7,
+    "expiry_in_seconds": 597661
+  },
+  "downloadURI": "myDownloadURI"
+}
+```
+
+# isValidWetransfertUrl
+
+Return a NodeJS URL object if the url is valid.
+
+If not, it return false
+
+
 
 # Upload
 You can upload a total file size >= 2Gibibyte (2147483648 Byte)
@@ -171,111 +279,6 @@ Remember do not forget get URL in "end" object.
 
 
 [End Object](#response-exemple)
-
-# Download weTransfer content from url
-
-### download(url, folder)
-The function take a valid wetransfer url and a destination folder
-
-Simply return a [PromiseProgress](https://github.com/sindresorhus/p-progress)
-
-The response is an object describing the [weTransfert content](#response-exemple)
-
-## Exemple
-
-``` javascript
-const { download } = require('wetransfert');
-
-download(myUrl, myDestinationFolder)
-  .onProgress(progress => {
-    console.log('progress', progress);
-  })
-  .then((res) => {
-    console.log(res); // success
-  })
-  .catch((err) => {
-    console.error('error  ', err);
-  });
-```
-
-# Download weTransfer content from url + pipe response
-### downloadPipe(url)
-
-This function take a valid wetransfer url
-
-It return a Promise and resolve a ReadableStream you can pipe. This stream come from [request-progress](https://www.npmjs.com/package/request-progress). So you can listen for progress while piping
-
-## Exemple 
-``` javascript
-downloadPipe(response.shortened_url)
-  .then(files => {
-      files.pipe(fs.createWriteStream("/home/orgrimarr/wetransfer/myDownload.zip"))
-  })
-  .catch(console.error)
-```
-
-> /!\ If your transfer contain only one file, wetransfer does not zip the content. Be carefull when using the downloadPipe function. You can obtain all files information using the getInfo function. 
-
-
-# Get information about weTransfert url
-
-## Exemple
-
-``` javascript
-const { getInfo } = require('wetransfert');
-
-getInfo('myWeTransfertURL')
-    .then((data) => {
-      console.log('success  ', data);
-    })
-    .catch((err) => {
-      console.error('error  ' + err);
-    })
-
-```
-
-## Response Exemple
-
-``` json
-{
-  "content": {
-    "id": "myID",
-    "security_hash": "9cc5646",
-    "state": "downloadable",
-    "transfer_type": 1,
-    "shortened_url": "myShortURI",
-    "title": null,
-    "description": "",
-    "items": [
-      {
-        "id": "myItemID",
-        "content_identifier": "file",
-        "name": "MyFIleName",
-        "size": 30779833462,
-        "previewable": false
-      },
-      {
-
-      }
-    ],
-    "password_protected": false,
-    "per_file_download_available": true,
-    "expires_at": "2017-09-09T10:22:05Z",
-    "uploaded_at": "2017-09-02T10:22:20Z",
-    "deleted_at": null,
-    "size": 31067650,
-    "expiry_in_days": 7,
-    "expiry_in_seconds": 597661
-  },
-  "downloadURI": "myDownloadURI"
-}
-```
-
-# isValidWetransfertUrl
-
-Return a NodeJS URL object if the url is valid.
-
-If not, it return false
 
 
 # To do
