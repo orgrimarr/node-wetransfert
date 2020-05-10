@@ -4,6 +4,8 @@
  [![Known Vulnerabilities](https://snyk.io/test/github/orgrimarr/node-wetransfert/badge.svg)](https://snyk.io/test/github/orgrimarr/node-wetransfert) 
 
 # Changelog
+- 2.1.4
+  - Fix upload !
 - 2.1.3 
   - Fix dependencies security issues
   - Fix download (Thanks @cylwin). The upload part is still broken
