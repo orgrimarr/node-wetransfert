@@ -21,7 +21,9 @@
   "license": "none",
   "scripts": {
     "snyk": "./node_modules/.bin/snyk test && ./node_modules/.bin/snyk test > snyk_report.txt",
-    "test": "snyk test"
+    "test": "snyk test",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "dependencies": {
     "cheerio": "^1.0.0-rc.2",
@@ -30,10 +32,10 @@
     "request": "^2.81.0",
     "request-progress": "^3.0.0",
     "request-promise": "^4.2.1",
+    "snyk": "^1.319.2",
     "unzipper": "^0.9.7",
     "xml2js": "^0.4.19"
   },
-  "devDependencies": {
-    "snyk": "^1.314.0"
-  }
+  "devDependencies": {},
+  "snyk": true
 }
