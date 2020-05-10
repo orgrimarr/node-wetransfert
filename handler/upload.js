@@ -1,8 +1,9 @@
-const path              = require('path')
 const EventEmitter      = require('events')
 const requestPromise    = require('request-promise')
 const Payload           = require('./Payload')
 const debug             = require('debug')("wetransfert:upload")
+const cheerio           = require('cheerio');
+const request           = require('request-promise');
 
 class Upload extends EventEmitter {
     constructor(mailFrom= '', mailRecipients = '', payloads = [], message = '', ui_language = 'en') {
@@ -21,6 +22,8 @@ class Upload extends EventEmitter {
         this.requestCue = {};
         this.isCanceled = false;
         this.fatalError = false;
+        this.csrfToken = ""
+        this.setCookie = ""
         this.on('cancel', (e) =>{
             if(!this.isCanceled){
                 this.cancelJob();
@@ -143,6 +146,9 @@ class Upload extends EventEmitter {
             };
 
             // start workflow
+            await this.getUploadCsrfToken()
+            debug('csrfToken', this.csrfToken)
+
             const res = await this.emailRequest();
             this.id = res.id;
             for(let i in this.fileToUpload){
@@ -182,8 +188,10 @@ class Upload extends EventEmitter {
             uri: url,
             body: body,
             headers: {
+                'cookie': this.setCookie.filter((c)=>c.indexOf('session')>-1)[0].split(';')[0],
                 'Orign': 'https://wetransfer.com',
                 'Refer': 'https://wetransfer.com/',
+                'x-csrf-token': this.csrfToken,
                 'Accept-Language': 'fr-FR,fr;q=0.8,en-US;q=0.6,en;q=0.4',
                 'Accept-Encoding': 'Accept-Encoding',
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36'
@@ -193,7 +201,31 @@ class Upload extends EventEmitter {
             resolveWithFullResponse: false
         }
     }
+    getUploadCsrfToken(){
+        return new Promise((resolve, reject) => {
+            debug(`getUploadCsrfToken: GET https://wetransfer.com/`)
+            request({
+                    method: 'GET',
+                    uri: "https://wetransfer.com/",
+                    json: false,
+                    simple: false,
+                    resolveWithFullResponse: true
+                })
+                .then((result) => {
+                    const setCookie = result.headers['set-cookie']
+                    const $ = cheerio.load(result.body);
+                    const csrf = $("meta[name=csrf-token]").attr('content');
+                    this.csrfToken = csrf
+                    this.setCookie = setCookie
 
+                    return resolve();
+                })
+                .catch((err) => {
+                    return reject(err.error);
+                })
+        }); 
+    }
+    
     // WF
     emailRequest() {
         if(this.isCanceled){
