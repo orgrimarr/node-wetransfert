@@ -1,9 +1,15 @@
 # [node-wetransfert](https://github.com/orgrimarr/node-wetransfert)
-## Download/Upload [wetransfert](https://wetransfer.com/) content with nodeJS ! - Unofficial API for wetransfer
+## Download/Upload [wetransfer](https://wetransfer.com/) content with nodeJS ! - Unofficial API for wetransfer
 
  [![Known Vulnerabilities](https://snyk.io/test/github/orgrimarr/node-wetransfert/badge.svg)](https://snyk.io/test/github/orgrimarr/node-wetransfert) 
 
 # Changelog
+- 2.1.5
+  - Fix upload (get link)
+  - Fix download
+  - Add download file by ID
+  - Upgrade dependencies
+  - Upload (send email) still broken. Wetransfer add a captcha. I will implement download via wetransfer account (user/password) soon
 - 2.1.4
   - Fix upload !
 - 2.1.3 
@@ -16,7 +22,7 @@ npm install wetransfert --save
 or
 yarn add wetransfert
 ```
-Tested in node 8.x
+Tested in node 8.x / 12.x
 
 
 ## You can require the module like this
@@ -49,6 +55,25 @@ download(myUrl, myDestinationFolder)
   });
 ```
 
+# Download weTransfer file by ID
+### download(url, folder, fileIds)
+- fileIds: An array of wetransfer file id
+
+## Exemple
+``` javascript
+const { download } = require('wetransfert');
+
+download(myUrl, myDestinationFolder, ['aaaaaaaaa'])
+  .onProgress(progress => {
+    console.log('progress', progress);
+  })
+  .then((res) => {
+    console.log(res); // success
+  })
+  .catch((err) => {
+    console.error('error  ', err);
+  });
+```
 
 # Download weTransfer content from url + pipe response
 ### downloadPipe(url)

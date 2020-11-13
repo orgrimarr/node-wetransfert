@@ -545,6 +545,6 @@ class Upload extends EventEmitter {
 
 
 
-exports.upload = function(mailFrom, mailRecipients, payloads, message, ui_language){
-    if (!(this instanceof Upload)) return new Upload(mailFrom, mailRecipients, payloads, message, ui_language);
+exports.upload = function(...args){
+    if (!(this instanceof Upload)) return new Upload(...args);
 };

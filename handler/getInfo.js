@@ -67,10 +67,10 @@ const getContentInfo = function (urlObj) {
     });
 }
 
-const getDownloadUri = function (urlObj, setCookie, csrf) {
+const getDownloadUri = function (urlObj, setCookie, csrf, fileIds) {
     return new Promise(async (resolve, reject) => {
         try {
-            const requestParams = await formatDownloadApiUri(urlObj);
+            const requestParams = await formatDownloadApiUri(urlObj, fileIds);
             debug(`getDownloadUri: POST ${requestParams.uri}  ${JSON.stringify(requestParams.body)}`)
             const data = await request({
                 method: 'POST',
@@ -101,7 +101,7 @@ const formatResult = function (array) {
         });
     });
 }
-const getInfo = async function (url) {
+const getInfo = async function (url, fileIds) {
     try {
         if (typeof (url) === 'string') {
             const URLObject = isValidWetransfertUrl(url);
@@ -111,7 +111,7 @@ const getInfo = async function (url) {
                 if (infos.state !== "downloadable") {
                     return formatResult([infos, null])
                 }
-                const downloadURI = await getDownloadUri(URLObject, infos.setCookie, infos.csrf)
+                const downloadURI = await getDownloadUri(URLObject, infos.setCookie, infos.csrf, fileIds)
                 return formatResult([infos, downloadURI])
             } else {
                 throw new Error(`Unhanle url: ${URLObject.href}`);

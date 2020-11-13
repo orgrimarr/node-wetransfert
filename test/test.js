@@ -28,7 +28,7 @@ const testSamples = [
 
 /////// DOWNLOAD SECTION ////////
 // Download URI : ex: https://wetransfer.com/downloads/5ea8acc81f4da9f731da85c6cb162a1d20180404153650/9bf4079e384a573d2e12fb4a84e655d520180404153650/0b8279
-const downloadURL = 'https://MyWetransferDownloadURI';
+const downloadURL = 'https://we.tl/t-BUr6nd2DAP';
 // Your download folder, ex : /home/orgrimarr/wetransfer
 const downloadFolder = path.resolve(__dirname, './tmp')
 
@@ -47,11 +47,9 @@ const language = 'en'
 const cancel = 0
 
 
-
-
 /////// TEST SECTION //////////
-const testDownload = function(){
-    download(downloadURL, downloadFolder)
+const testDownload = function(fileIds = null){
+    download(downloadURL, downloadFolder, fileIds)
         .onProgress(progress => {
             console.log('progress', progress);
         })
@@ -65,7 +63,7 @@ const testDownload = function(){
 
 const testDownloadPipe = function(){
     const destName = `download_${Math.floor(Math.random() * 1000)}.zip`
-    testUpload('', '', testSamples[0], body, 'en')
+    testUpload('', '', testSamples, body, 'en')
     .then(waitForDownloadable)
     .then(response => {
         console.log("response", JSON.stringify(response, null, 2))
@@ -115,12 +113,12 @@ const testUploadLink = function(){
 
 // Uncomment 
 
-//testDownload();
+// testDownload();
 // testDownloadPipe()
-//testUpload();
-testUploadLink()
+// testUploadLink()
+// testUpload()
 
-// getInfo("https://we.tl/t-l9lCzgnmcp")
+// getInfo("https://we.tl/t-BUr6nd2DAP")
 // .then(response =>  {
 //     console.log(JSON.stringify(response, null, 2))
 // })

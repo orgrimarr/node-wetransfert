@@ -33,8 +33,12 @@ exports.isValidWetransfertUrl = function(url){
     }
 }
 
-exports.formatDownloadApiUri = async function(urlObj){
+exports.formatDownloadApiUri = async function(urlObj, fileId){
     try{
+        if(fileId && !Array.isArray(fileId)){
+            fileId = [fileId]
+        }
+
         // Short link 
         if(weTransfertRegexShort.exec(urlObj.href) !== null){
             debug("formatDownloadApiUri: short_url")
@@ -42,12 +46,19 @@ exports.formatDownloadApiUri = async function(urlObj){
             const newURL = parse(resp);
             if(newURL){
                 const [, , urlID, hash] = newURL.pathname.split('/');
-                return  {
+                const downloadParms = {
                     uri: `https://wetransfer.com/api/${apiVersion}/transfers/${urlID}/download`,
                     body: {
-                        "security_hash": hash
+                        "security_hash": hash,
+                        "intent": "entire_transfer"
                     }
                 }
+                if(fileId){
+                    downloadParms.body.intent = "single_file"
+                    downloadParms.body.file_ids = fileId
+                }
+
+                return downloadParms
             }
         }
 
@@ -55,25 +66,39 @@ exports.formatDownloadApiUri = async function(urlObj){
         if(weTransfertRegex.exec(urlObj.href) !== null){
             debug("formatDownloadApiUri: normal_url")
             const [, , urlID, recipient_id, hash] = urlObj.pathname.split('/');
-            return  {
+            const downloadParms = {
                 uri: `https://wetransfer.com/api/${apiVersion}/transfers/${urlID}/download`,
                 body: {
                     "recipient_id": recipient_id,
-                    "security_hash": hash
+                    "security_hash": hash,
+                    "intent": "entire_transfer"
                 }
             }
+            if(fileId){
+                downloadParms.body.intent = "single_file"
+                downloadParms.body.file_ids = fileId
+            }
+
+            return downloadParms
         }
 
         // Medium  url
         if(weTransfertRegexMedium.exec(urlObj.href) !== null){
             debug("formatDownloadApiUri: medium_url")
             const [, , urlID, hash] = urlObj.pathname.split('/');
-            return  {
+            const downloadParms = {
                 uri: `https://wetransfer.com/api/${apiVersion}/transfers/${urlID}/download`,
                 body: {
-                    "security_hash": hash
+                    "security_hash": hash,
+                    "intent": "entire_transfer"
                 }
             }
+            if(fileId){
+                downloadParms.body.intent = "single_file"
+                downloadParms.body.file_ids = fileId
+            }
+
+            return downloadParms
         }
     }
     catch(e){

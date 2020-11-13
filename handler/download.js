@@ -10,13 +10,13 @@ const fs            = require('fs');
 
 
 
-exports.download = function(url = '', destPath= null){
+exports.download = function(url = '', destPath = null, fileIds = null){
     return new PProgress(async (resolve, reject, progress) => {
         if(!destPath){
             return reject(new Error('Not destination path found'));
         }
         try{
-            const weTransfertObject = await getInfo(url);
+            const weTransfertObject = await getInfo(url, fileIds);
             if(!weTransfertObject) return reject(new Error('Not a valid url'));
             const downloadProcess = ReqProgress(request(weTransfertObject.downloadURI), {
                throttle: 500,                    // Throttle the progress event to 2000ms, defaults to 1000ms 
@@ -45,22 +45,21 @@ exports.download = function(url = '', destPath= null){
                 .on('end', () => {
                     return resolve(weTransfertObject);
                 })
-            if(weTransfertObject.content.items.length >= 2 ? true : false){
-                mkdirp(destPath, (err) =>{
-                    if(err) return reject(err);
-                    downloadProcess
-                        .pipe(unzip.Extract({ path: destPath }))
-//                        .pipe(fstream.Writer(destPath))
-                });
+            if((weTransfertObject.content.items.length >= 2) && !fileIds){
+                if(!fs.existsSync(destPath)){
+                    await mkdirp(destPath)
+                }
+                downloadProcess
+                    .pipe(unzip.Extract({ path: destPath }))
             }
             else{
-                mkdirp(destPath, (err) =>{
-                    if(err) return reject(err);
-                    downloadProcess
-                        .pipe(fs.createWriteStream(
-                            path.join(destPath, weTransfertObject.content.items[0].name)
-                        ));
-                });
+                if(!fs.existsSync(destPath)){
+                    await mkdirp(destPath)
+                }
+                downloadProcess
+                    .pipe(fs.createWriteStream(
+                        path.join(destPath, weTransfertObject.content.items[0].name)
+                    ));
             }
         }
         catch(e){
