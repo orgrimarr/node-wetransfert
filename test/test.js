@@ -61,22 +61,15 @@ const testDownload = function(fileIds = null){
         });
 }
 
-const testDownloadPipe = function(){
+const testDownloadPipe = async function(){
     const destName = `download_${Math.floor(Math.random() * 1000)}.zip`
-    testUpload('', '', testSamples, body, 'en')
-    .then(waitForDownloadable)
-    .then(response => {
-        console.log("response", JSON.stringify(response, null, 2))
-        console.log('>>> response.shortened_url', response.shortened_url)
-        return downloadPipe(response.shortened_url)
+    const downloadStream = await downloadPipe(downloadURL, null, (percent) => { 
+        console.log('testDownloadPipe callback', percent) 
     })
-    .then(files => {
-        files.pipe(fs.createWriteStream(path.resolve(downloadFolder, destName)))
+    downloadStream.on('close', () => {
+        console.log('testDownloadPipe', 'close')
     })
-    .then(done => {
-        console.log("testDownloadPipe DONE", done || "", destName)
-    })
-    .catch(console.error)
+    downloadStream.pipe(fs.createWriteStream(path.resolve(downloadFolder, destName)))
 }
 
 const testUpload = function(sender = emailSender, receiver = reveiverSender, toUpload = filesToUpload, content = body, lang = language){
