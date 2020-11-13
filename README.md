@@ -4,6 +4,8 @@
  [![Known Vulnerabilities](https://snyk.io/test/github/orgrimarr/node-wetransfert/badge.svg)](https://snyk.io/test/github/orgrimarr/node-wetransfert) 
 
 # Changelog
+- 2.2.0
+  - Remove request* libs and use node-fetch instead
 - 2.1.5
   - Fix upload (get link)
   - Fix download

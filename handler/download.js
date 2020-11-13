@@ -1,7 +1,7 @@
 const { getInfo }   = require('./getInfo');
 const PProgress     = require('../utils/PProgress');
-const ReqProgress   = require('request-progress');
-const request       = require('request');
+const ReqProgress   = null
+const request       = null
 const debug         = require('debug')("wetransfert:download")
 const mkdirp        = require('mkdirp');
 const unzip         = require('unzipper');

@@ -1,9 +1,9 @@
 const EventEmitter      = require('events')
-const requestPromise    = require('request-promise')
+const requestPromise    = null
 const Payload           = require('./Payload')
 const debug             = require('debug')("wetransfert:upload")
 const cheerio           = require('cheerio');
-const request           = require('request-promise');
+const request           = null
 
 class Upload extends EventEmitter {
     constructor(mailFrom= '', mailRecipients = '', payloads = [], message = '', ui_language = 'en') {
@@ -23,7 +23,7 @@ class Upload extends EventEmitter {
         this.isCanceled = false;
         this.fatalError = false;
         this.csrfToken = ""
-        this.setCookie = ""
+        this.sessionCookie = ""
         this.on('cancel', (e) =>{
             if(!this.isCanceled){
                 this.cancelJob();
@@ -188,7 +188,7 @@ class Upload extends EventEmitter {
             uri: url,
             body: body,
             headers: {
-                'cookie': this.setCookie.filter((c)=>c.indexOf('session')>-1)[0].split(';')[0],
+                'cookie': this.sessionCookie,
                 'Orign': 'https://wetransfer.com',
                 'Refer': 'https://wetransfer.com/',
                 'x-csrf-token': this.csrfToken,
