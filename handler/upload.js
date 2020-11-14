@@ -1,51 +1,68 @@
-const EventEmitter      = require('events')
-const requestPromise    = null
-const Payload           = require('./Payload')
-const debug             = require('debug')("wetransfert:upload")
-const cheerio           = require('cheerio');
-const request           = null
+const debug = require('debug')("wetransfert:upload")
+const EventEmitter = require('events')
+const Payload = require('./Payload')
+const utils = require('../utils/utils')
+const { default: fetch } = require('node-fetch')
+const AbortController = require("abort-controller")
+const FormData = require('form-data')
+const { type } = require('os')
 
 class Upload extends EventEmitter {
-    constructor(mailFrom= '', mailRecipients = '', payloads = [], message = '', ui_language = 'en') {
-        super();
+    constructor(mailFrom = '', mailRecipients = '', payloads = [], message = '', ui_language = 'en') {
+        super()
         this.apiVersion = "v4"
-        this.id = '';
-        this.mailFrom = mailFrom;
-        this.mailRecipients = mailRecipients;
-        if(!Array.isArray(payloads)){
+        this.maxUploadSize = 2147483648
+
+        this.id = ''
+        this.mailFrom = mailFrom
+        this.mailRecipients = mailRecipients
+        if (!Array.isArray(payloads)) {
             payloads = [payloads]
         }
-        this.payloads = payloads;
-        this.message = message;
-        this.ui_language = ui_language;
-        this.fileToUpload = {};
-        this.requestCue = {};
-        this.isCanceled = false;
-        this.fatalError = false;
+
+        this.totalProgress = {
+            "percent": 0,
+            "speed": 'NA for the moment',
+            "size": {
+                "total": 0,
+                "transferred": 0
+            },
+            "time": {
+                "elapsed": 0,
+                "remaining": 'NA for the moment'
+            }
+        }
+
+        this.payloads = payloads
+        this.message = message
+        this.ui_language = ui_language
+        this.fileToUpload = {}
+        this.requestCue = {}
+        this.controller = new AbortController()
+        this.isCanceled = false
+        this.fatalError = false
         this.csrfToken = ""
         this.sessionCookie = ""
-        this.on('cancel', (e) =>{
-            if(!this.isCanceled){
-                this.cancelJob();
+        this.on('cancel', (e) => {
+            if (!this.isCanceled) {
+                this.cancelJob()
             }
-        });
-        this.on('error', (e) =>{
-            this.fatalError = true;
-            if(e) debug(`/!\\ fatalError: ${e.message}`)
+        })
+        this.on('error', (e) => {
+            this.fatalError = true
+            if (e) debug(`/!\\ fatalError: ${e.message}`)
             debug(`/!\\ fatalError: ${e}`)
 
-            if(!this.isCanceled){
-                this.cancelJob(e);
+            if (!this.isCanceled) {
+                this.cancelJob(e)
             }
-        });
-        this.on('end',  () =>{
+        })
+        this.on('end', () => {
             debug("upload progress: 1")
-            this.emit('progress', 1);
-        });
+            this.emit('progress', 1)
+        })
 
-
-
-        this.lunchupload();
+        this.lunchupload()
     }
 
     //Start upload
@@ -54,15 +71,15 @@ class Upload extends EventEmitter {
             // verification
             if (this.mailFrom !== '' || this.mailRecipients !== '') {
                 if (!this.mailFrom || typeof this.mailFrom !== 'string' || !this.validateEmail(this.mailFrom)) {
-                    return this.emit('error', 'No mail from found or mail from is not a string or is not a valide email');
+                    return this.emit('error', new Error('No mail from found or mail from is not a string or is not a valide email'))
                 }
                 if (!this.mailRecipients || !Array.isArray(this.mailRecipients) || this.mailRecipients.length < 1) {
-                    return this.emit('error', 'No mail recipients found or is not an array');
+                    return this.emit('error', new Error('No mail recipients found or is not an array'))
                 }
                 for (let i in this.mailRecipients) {
-                    const currentMail = this.mailRecipients[i];
+                    const currentMail = this.mailRecipients[i]
                     if (typeof currentMail !== 'string' || !this.validateEmail(currentMail)) {
-                        return this.emit('error', 'No mail recipient found or mail recipient is not a valide email');
+                        return this.emit('error', new Error('No mail recipient found or mail recipient is not a valide email'))
                     }
                 }
             }
@@ -70,254 +87,211 @@ class Upload extends EventEmitter {
             debug(`from: ${this.mailFrom}`)
             debug(`from: ${Array.isArray(this.mailRecipients) ? this.mailRecipients.join(', ') : this.mailRecipients}`)
 
-            const knowFileName = new Set();
+            const knowFileName = new Set()
             for (let payload of this.payloads) {
                 // Case Payload is already a Payload instance
-                if(payload instanceof Payload){
-                    if(!knowFileName.has(payload.name)){
-                        knowFileName.add(payload.name);
+                if (payload instanceof Payload) {
+                    if (knowFileName.has(payload.name)) {
+                        return this.emit('error', new Error(`Error duplicate file name ${payload.name}`))
                     }
-                    else{
-                        return this.emit('error', `Error duplicate file name ${payload.name}`);
-                    }
+                    knowFileName.add(payload.name)
                     this.fileToUpload[payload.name] = payload
                     debug(`addPaload: type:PayloadObject name:${payload.name}`)
                     continue
                 }
 
                 // Case Payload is path
-                if(typeof payload === "string"){
+                if (typeof payload === "string") {
                     const curPayload = new Payload({
                         filePath: payload
                     })
-                    if(!knowFileName.has(curPayload.name)){
-                        knowFileName.add(curPayload.name);
+                    if (knowFileName.has(curPayload.name)) {
+                        return this.emit('error', new Error(`Error duplicate file name ${curPayload.name}`))
                     }
-                    else{
-                        return this.emit('error', `Error duplicate file name ${curPayload.name}`);
-                    }
+                    knowFileName.add(curPayload.name)
                     this.fileToUpload[curPayload.name] = curPayload
                     debug(`addPaload: type:path name:${curPayload.name}`)
                     continue
                 }
 
                 // Case object definition
-                if(typeof payload === "object"){
+                if (typeof payload === "object") {
                     const curPayload = new Payload(payload)
-                    if(!knowFileName.has(curPayload.name)){
-                        knowFileName.add(curPayload.name);
+                    if (knowFileName.has(curPayload.name)) {
+                        return this.emit('error', `Error duplicate file name ${curPayload.name}`)
                     }
-                    else{
-                        return this.emit('error', `Error duplicate file name ${curPayload.name}`);
-                    }
+                    knowFileName.add(curPayload.name)
                     this.fileToUpload[curPayload.name] = curPayload
                     debug(`addPaload: type:ObjectDefinition name:${curPayload.name}`)
                     continue
                 }
 
             }
-            if(knowFileName.length < 1){
-                return this.emit('error', 'you must provide at least one file');
+            if (knowFileName.length < 1) {
+                return this.emit('error', new Error('you must provide at least one file'))
             }
 
             debug(`${knowFileName.size} file to upload`)
 
-            this.totalSizeToUpload = 0;
-            this.totalSizeUploaded = 0;
-            this.startTime = Date.now();
+            this.totalSizeToUpload = 0
+            this.totalSizeUploaded = 0
+            this.startTime = Date.now()
 
-            for(let i in this.fileToUpload){
+            for (let i in this.fileToUpload) {
                 this.totalSizeToUpload += typeof this.fileToUpload[i].size !== "number" ? parseInt(this.fileToUpload[i].size, 10) : this.fileToUpload[i].size
             }
-            if(this.totalSizeToUpload > 2147483648){
-                return this.emit('error', `Total fileSize cant exeed 2Gibibyte, your total size is ${this.totalSizeToUpload} Byte only accept 2147483648 Byte`);
+            if (this.totalSizeToUpload > this.maxUploadSize) {
+                return this.emit('error', new Error(`Total fileSize cant exeed 2Gibibyte, your total size is ${this.totalSizeToUpload} Byte only accept ${this.maxUploadSize} Byte`))
             }
-            this.totalProgress = {
-                "percent": 0,
-                "speed": 'NA for the moment',
-                "size": {
-                    "total": this.totalSizeToUpload,
-                    "transferred": 0
-                },
-                "time": {
-                    "elapsed": 0,
-                    "remaining": 'NA for the moment'
-                }
-            };
+
+            this.totalProgress.size.total = this.totalSizeToUpload
 
             // start workflow
             await this.getUploadCsrfToken()
             debug('csrfToken', this.csrfToken)
 
-            const res = await this.emailRequest();
-            this.id = res.id;
-            for(let i in this.fileToUpload){
-                const currentFile = this.fileToUpload[i];
-                const fileAttr = res.files.find((elem) =>{
-                    return elem.name === currentFile.name;
-                })
-                this.fileToUpload[i].chunk_size = fileAttr.chunk_size;
-                this.fileToUpload[i].id = fileAttr.id;
+            const res = await this.emailRequest()
+            this.id = res.id
+            for (let i in this.fileToUpload) {
+                const currentFile = this.fileToUpload[i]
+                const fileAttr = res.files.find(elem => elem.name === currentFile.name)
+                this.fileToUpload[i].chunk_size = fileAttr.chunk_size
+                this.fileToUpload[i].id = fileAttr.id
                 await this.uploadFileWF({
-                        id: fileAttr.id,
-                        name: currentFile.name,
-                        chunk_size: fileAttr.chunk_size,
-                        stream: currentFile.stream,
-                        size: currentFile.size
-                    }
+                    id: fileAttr.id,
+                    name: currentFile.name,
+                    chunk_size: fileAttr.chunk_size,
+                    stream: currentFile.stream,
+                    size: currentFile.size
+                }
                 )
             }
-            const finalRes = await this.finalize();
-            return this.emit('end', finalRes);
-        } catch (e) {
-            if(!this.isCanceled){
-                this.emit('error', e);
+            const finalRes = await this.finalize()
+            return this.emit('end', finalRes)
+        }
+        catch (error) {
+            if (!this.isCanceled) {
+                this.emit('error', error)
             }
         }
     }
 
     //Utils
     validateEmail(email) {
-        var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-        return re.test(email);
+        const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        return re.test(email)
     }
-    formatRequestOption(method, url, body) {
+    formatRequestOption(method, url, body = {}) {
         debug(`formatRequestOption ${method} ${url} ${JSON.stringify(body)}`)
         return {
             method: method,
-            uri: url,
-            body: body,
+            body: JSON.stringify(body),
+            signal: this.controller.signal,
             headers: {
                 'cookie': this.sessionCookie,
                 'Orign': 'https://wetransfer.com',
+                'Content-Type': 'application/json',
                 'Refer': 'https://wetransfer.com/',
                 'x-csrf-token': this.csrfToken,
                 'Accept-Language': 'fr-FR,fr;q=0.8,en-US;q=0.6,en;q=0.4',
-                'Accept-Encoding': 'Accept-Encoding',
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36'
-            },
-            json: true,
-            simple: true,
-            resolveWithFullResponse: false
+            }
         }
     }
-    getUploadCsrfToken(){
-        return new Promise((resolve, reject) => {
-            debug(`getUploadCsrfToken: GET https://wetransfer.com/`)
-            request({
-                    method: 'GET',
-                    uri: "https://wetransfer.com/",
-                    json: false,
-                    simple: false,
-                    resolveWithFullResponse: true
-                })
-                .then((result) => {
-                    const setCookie = result.headers['set-cookie']
-                    const $ = cheerio.load(result.body);
-                    const csrf = $("meta[name=csrf-token]").attr('content');
-                    this.csrfToken = csrf
-                    this.setCookie = setCookie
+    async apiRequest(method, url, body) {
+        try {
+            debug(`formatRequestOption ${method} ${url}`)
 
-                    return resolve();
-                })
-                .catch((err) => {
-                    return reject(err.error);
-                })
-        }); 
+            const requestConfig = this.formatRequestOption(method, url, body)
+            const response = await fetch(url, requestConfig)
+            if (!response.ok) {
+                const textBody = await response.text()
+                throw new Error(`Error ${method} ${url} server respond with status ${result.status} ${result.statusText}. ${textBody}`)
+            }
+            const jsonBody = await response.json()
+            return jsonBody
+        }
+        catch (error) {
+            debug(error)
+            if (error.name !== 'AbortError') {
+                throw error
+            }
+        }
     }
-    
+    async getUploadCsrfToken() {
+        debug(`getUploadCsrfToken: GET https://wetransfer.com/`)
+        const infos = await utils.getWetransferPageContent()
+        this.csrfToken = infos.csrf
+        this.sessionCookie = infos.sessionCookie
+    }
+
     // WF
-    emailRequest() {
-        if(this.isCanceled){
-            return Promise.reject('Job Already canceled in _emailRequest');
+    async emailRequest() {
+        if (this.isCanceled) {
+            throw new Error('Job Already canceled in _emailRequest')
         }
 
         const files = []
-        for(let i in this.fileToUpload){
+        for (let i in this.fileToUpload) {
             files.push({
                 name: this.fileToUpload[i].name,
                 size: this.fileToUpload[i].size
             })
         }
-        
 
         let url = `https://wetransfer.com/api/${this.apiVersion}/transfers/link`
-        let body = {
-                message:        typeof this.message === 'string' ? this.message : '',
-                ui_language:    typeof this.ui_language === 'string' ? this.ui_language : 'en',
-                files:          files
-            }
+        const body = {
+            message: typeof this.message === 'string' ? this.message : '',
+            ui_language: typeof this.ui_language === 'string' ? this.ui_language : 'en',
+            files: files
+        }
         if (this.mailFrom !== '' || this.mailRecipients !== '') {
-            body.recipients = this.mailRecipients;
-            body.from = this.mailFrom;
+            body.recipients = this.mailRecipients
+            body.from = this.mailFrom
             url = `https://wetransfer.com/api/${this.apiVersion}/transfers/email`
         }
-        // Link upload
-        
 
-        return new Promise((resolve, reject) => {
-            debug("emailRequest")
-            this.requestCue.emailRequest = requestPromise(this.formatRequestOption('POST', url, body))
-            .then((res) =>{
-                return resolve(res);
-            }, (err) => {
-                if(err) debug(`emailRequest error: ${err.message}`)
-                return reject(err);
-            })
-        });
+        debug("emailRequest")
+        const result = await this.apiRequest('POST', url, body)
+        return result
     }
-    finalize() {
-        if(this.isCanceled){
-            return Promise.reject('Job Already canceled in _finalize');
+    async finalize() {
+        if (this.isCanceled) {
+            throw new Error('Job Already canceled in _finalize')
         }
-        return new Promise((resolve, reject) => {
-            debug(`finalize`)
-            this.requestCue.finalize = requestPromise(this.formatRequestOption(
-                'PUT',
-                `https://wetransfer.com/api/${this.apiVersion}/transfers/${this.id}/finalize`
-            ))
-            .then((res) =>{
-                return resolve(res);
-            }, (err) => {
-                if(err) debug(`finalize error: ${err.message}`)
-                return reject(err);
-            })
-        });
-    }
-    cancelJob(error){
-        debug("cancelJob")
-        this.isCanceled = true
-        for(let i in this.requestCue){
-            try{
-                this.requestCue[i].cancel();
-            }
-            catch(e){
 
+        debug(`finalize`)
+        const result = await this.apiRequest('PUT', `https://wetransfer.com/api/${this.apiVersion}/transfers/${this.id}/finalize`)
+        return result
+    }
+    async cancelJob(error) {
+        try {
+            debug("cancelJob")
+            this.isCanceled = true
+            this.controller.abort()
+
+            await utils.waitAsync(1000)
+
+            await this.apiRequest('DELETE', `https://wetransfer.com/api/${this.apiVersion}/transfers/${this.id}`)
+            if (!this.fatalError) {
+                return this.emit('error', new Error('This upload was canceled by user'))
             }
+            this.cancelJob = function () { }
+            return this.emit('error', error)
         }
-        requestPromise(this.formatRequestOption(
-            'DELETE',
-            `https://wetransfer.com/api/${this.apiVersion}/transfers/${this.id}`
-        ))
-        .then(() => {
-            if(!this.fatalError){
-                return this.emit('error', 'this upload was canceled by user');
+        catch (error) {
+            if (!this.fatalError) {
+                return this.emit('error', new Error('This upload was canceled by user'))
             }
-            this.cancelJob = function(){return};
-            return this.emit('error', error);
-        }, () =>{
-            if(!this.fatalError){
-                return this.emit('error', 'this upload was canceled by user');
-            }
-            this.cancelJob = function(){return};
-            return this.emit('error', error);
-        })
+            this.cancelJob = function () { }
+            return this.emit('error', error)
+        }
     }
 
     // PerFile functions
     uploadFileWF(currentPayload) {
-        if(this.isCanceled){
-            return Promise.reject('Job Already canceled in _uploadFileWF');
+        if (this.isCanceled) {
+            return Promise.reject(new Error('Job Already canceled in _uploadFileWF'))
         }
         return new Promise(async (resolve, reject) => {
             debug("start uploadFileWF")
@@ -328,223 +302,213 @@ class Upload extends EventEmitter {
                 chunk_size: currentPayload.chunk_size,
                 size: currentPayload.size
             }
-            let uploadFileStream = null;
+            let uploadFileStream = null
             try {
-                await this.fileRequest(fileObj.name, fileObj.size);
+                await this.fileRequest(fileObj.name, fileObj.size)
                 //Creation du stream du fichier et des "buffer"
-                const receivedBuffers = [];
-                let receivedBuffersLength = 0;
-                let currentChunkOffset = 0; // On commence à 1
-                let totalUploaded = 0;
+                const receivedBuffers = []
+                let receivedBuffersLength = 0
+                let currentChunkOffset = 0 // On commence à 1
 
                 const getChunk = async function () {
-                    try {
-                        const combinedBuffer = Buffer.concat(receivedBuffers, receivedBuffersLength);
-                        receivedBuffers.length = 0; // reset the array while keeping the original reference
-                        receivedBuffersLength = 0;
-                        const remainder = new Buffer(combinedBuffer.length - fileObj.chunk_size);
-                        combinedBuffer.copy(remainder, 0, fileObj.chunk_size);
-                        receivedBuffers.push(remainder);
-                        receivedBuffersLength = remainder.length;
+                    const combinedBuffer = Buffer.concat(receivedBuffers, receivedBuffersLength)
+                    receivedBuffers.length = 0 // reset the array while keeping the original reference
+                    receivedBuffersLength = 0
+                    const remainder = new Buffer(combinedBuffer.length - fileObj.chunk_size)
+                    combinedBuffer.copy(remainder, 0, fileObj.chunk_size)
+                    receivedBuffers.push(remainder)
+                    receivedBuffersLength = remainder.length
 
-                        // Return the perfectly sized part.
-                        const uploadBuffer = new Buffer(fileObj.chunk_size);
-                        combinedBuffer.copy(uploadBuffer, 0, 0, fileObj.chunk_size);
-                        return uploadBuffer;
-                    } catch (e) {
-                        throw e.error || e;
-                    }
+                    // Return the perfectly sized part.
+                    const uploadBuffer = new Buffer(fileObj.chunk_size)
+                    combinedBuffer.copy(uploadBuffer, 0, 0, fileObj.chunk_size)
+                    return uploadBuffer
                 }
 
-                //const neededChunk = fileObj.size > fileObj.chunk_size ? Math.floor(fileObj.size / fileObj.chunk_size) + 1 : 1;
+                //const neededChunk = fileObj.size > fileObj.chunk_size ? Math.floor(fileObj.size / fileObj.chunk_size) + 1 : 1
                 fileObj.stream
                     .on('data', async (chunk) => {
                         try {
-                            receivedBuffers.push(chunk);
-                            receivedBuffersLength += chunk.length;
-                            // Chunk size test
+                            receivedBuffers.push(chunk)
+                            receivedBuffersLength += chunk.length
+                            var FormData = require('form-data');           // Chunk size test
                             if (receivedBuffersLength >= fileObj.chunk_size) {
-                                currentChunkOffset++;
-                                uploadFileStream.pause();
-                                const currentChunk = await getChunk();
-                                const currentChunkLength = currentChunk.length;
-                                const template = await this.chunkRequest(fileObj.id, currentChunkOffset, currentChunkLength, 0);
-                                await this.s3upload(template, fileObj.fileName, currentChunk, currentChunkOffset);
-                                totalUploaded += currentChunkLength;
-                                this.totalSizeUploaded += currentChunkLength;
-                                const progress = (this.totalSizeUploaded / this.totalSizeToUpload).toFixed(2);
-                                if(this.totalProgress.percent < progress){
-                                    this.totalProgress.percent = progress;
-                                    this.totalProgress.size.transferred = this.totalSizeUploaded;
-                                    const now = Date.now();
-                                    this.totalProgress.time.elapsed += (now - this.startTime);
+                                currentChunkOffset++
+                                uploadFileStream.pause()
+                                const currentChunk = await getChunk()
+                                const currentChunkLength = currentChunk.length
+                                const template = await this.chunkRequest(fileObj.id, currentChunkOffset, currentChunkLength, 0)
+                                await this.s3upload(template, fileObj.name, currentChunk, currentChunkOffset)
+                                this.totalSizeUploaded += currentChunkLength
+                                const progress = (this.totalSizeUploaded / this.totalSizeToUpload).toFixed(2)
+                                if (this.totalProgress.percent < progress) {
+                                    this.totalProgress.percent = progress
+                                    this.totalProgress.size.transferred = this.totalSizeUploaded
+                                    const now = Date.now()
+                                    this.totalProgress.time.elapsed += (now - this.startTime)
 
                                     debug("upload progress: " + this.totalProgress)
-                                    this.emit('progress', this.totalProgress);
+                                    this.emit('progress', this.totalProgress)
                                 }
-                                uploadFileStream.resume();
+                                uploadFileStream.resume()
                             }
-                            return 'ok';
+                            return 'ok'
                         } catch (e) {
-                            uploadFileStream.destroy();
+                            uploadFileStream.destroy()
 
-                            if(e) debug(`uploadFileWf data error: ${e.message}`);
-                            return reject(e.message);
+                            debug(`uploadFileWf data error: ${e.message}`)
+                            return reject(e.message)
                         }
                     })
                     .on('end', async () => {
-                        try{
+                        try {
                             //Last chunk
-                            currentChunkOffset++;
-                            const currentChunk = Buffer.concat(receivedBuffers, receivedBuffersLength);
-                            const currentChunkLength = currentChunk.length;
-                            const template = await this.chunkRequest(fileObj.id, currentChunkOffset, currentChunkLength, 0);
-                            await this.s3upload(template, fileObj.fileName, currentChunk, currentChunkOffset);
-                            totalUploaded += currentChunkLength;
-                            this.totalSizeUploaded += currentChunkLength;
-                            const progress = (this.totalSizeUploaded / this.totalSizeToUpload).toFixed(2);
-                            if(this.totalProgress.percent < progress){
-                                this.totalProgress.percent = progress;
-                                this.totalProgress.size.transferred = this.totalSizeUploaded;
-                                const now = Date.now();
-                                this.totalProgress.time.elapsed += (now - this.startTime);
+                            currentChunkOffset++
+                            const currentChunk = Buffer.concat(receivedBuffers, receivedBuffersLength)
+                            const currentChunkLength = currentChunk.length
+                            const template = await this.chunkRequest(fileObj.id, currentChunkOffset, currentChunkLength, 0)
+                            await this.s3upload(template, fileObj.name, currentChunk, currentChunkOffset)
+                            this.totalSizeUploaded += currentChunkLength
+                            const progress = (this.totalSizeUploaded / this.totalSizeToUpload).toFixed(2)
+                            if (this.totalProgress.percent < progress) {
+                                this.totalProgress.percent = progress
+                                this.totalProgress.size.transferred = this.totalSizeUploaded
+                                const now = Date.now()
+                                this.totalProgress.time.elapsed += (now - this.startTime)
 
                                 debug("upload progress: " + this.totalProgress)
-                                this.emit('progress', this.totalProgress);
+                                this.emit('progress', this.totalProgress)
                             }
-                            const final = await this.finalizeFile(fileObj.id, currentChunkOffset);
-                            return resolve(final);
+                            const final = await this.finalizeFile(fileObj.id, currentChunkOffset)
+                            return resolve(final)
                         }
-                        catch(e){
-                            if(e) debug(`uploadFileWf end error: ${e.message}`)
-                            return reject(e);
+                        catch (e) {
+                            if (e) debug(`uploadFileWf end error: ${e.message}`)
+                            return reject(e)
                         }
                     })
                     .on('error', (err) => {
-                        if(err) debug(`uploadFileWf on error: ${err.message}`)
-                        return reject( err.error || err);
-                    });
+                        if (err) debug(`uploadFileWf on error: ${err.message}`)
+                        return reject(err.error || err)
+                    })
 
-            } catch (e) {
-                if(uploadFileStream !== null){
-                    uploadFileStream.destroy();
-                }
-                if(e) debug(`uploadFileWf final error: ${e.message}`)
-                return reject(e.message);
             }
-        });
+            catch (e) {
+                if (uploadFileStream !== null) {
+                    uploadFileStream.destroy()
+                }
+                debug(`uploadFileWf final error: ${e.message}`)
+                return reject(e)
+            }
+        })
     }
-    fileRequest(filename, chunk_size) {
-        if(this.isCanceled){
-            return Promise.reject('Job Already canceled in _fileRequest');
+    async fileRequest(filename, chunk_size) {
+        if (this.isCanceled) {
+            throw new Error('Job Already canceled in _fileRequest')
         }
 
-        return new Promise((resolve, reject) => {
-            debug(`fileRequest name:${filename} size:${chunk_size}`)
-            this.requestCue.fileRequest = requestPromise(this.formatRequestOption(
-                'POST',
-                `https://wetransfer.com/api/${this.apiVersion}/transfers/${this.id}/files`, {
-                    "name": filename,
-                    "size": chunk_size
-                }
-            ))
-            .then((res) =>{
-                return resolve(res);
-            }, (err) => {
-                if(err) debug(`fileRequest error: ${err.message}`)
-                return reject(err);
-            })
-        });
+        debug(`fileRequest name:${filename} size:${chunk_size}`)
+        const result = await this.apiRequest('POST',
+            `https://wetransfer.com/api/${this.apiVersion}/transfers/${this.id}/files`, {
+            "name": filename,
+            "size": chunk_size
+        })
+
+        return result
     }
-    chunkRequest(fileID, chunk_number, chunk_size, retries) {
-        if(this.isCanceled){
-            return Promise.reject('Job Already canceled in _chunkRequest');
+    async chunkRequest(fileID, chunk_number, chunk_size, retries) {
+        if (this.isCanceled) {
+            throw new Error('Job Already canceled in _chunkRequest')
         }
-        return new Promise((resolve, reject) => {
-            debug(`chunkRequest id:${fileID} chunk:${chunk_number} size:${chunk_size} retries:${retries}`)
-            this.requestCue.chunkRequest = requestPromise(this.formatRequestOption(
-                'PUT',
-                `https://wetransfer.com/api/${this.apiVersion}/transfers/${this.id}/files/${fileID}`, {
-                    "chunk_number": chunk_number || 1,
-                    "chunk_size": chunk_size,
-                    "retries": retries || 0
-                }
-            ))
-            .then((res) =>{
-                return resolve(res);
-            }, (err) => {
-                if(err) debug(`chunkRequest error: ${err.message}`)
-                return reject(err);
-            })
-        });
+        debug(`chunkRequest id:${fileID} chunk:${chunk_number} size:${chunk_size} retries:${retries}`)
+
+        const result = await this.apiRequest('PUT',
+            `https://wetransfer.com/api/${this.apiVersion}/transfers/${this.id}/files/${fileID}`, {
+            "chunk_number": chunk_number || 1,
+            "chunk_size": chunk_size,
+            "retries": retries || 0
+        })
+        return result
     }
-    s3upload(template, fileName, uploadBuffer, chunk_number) {
-        if(this.isCanceled){
-            return Promise.reject('Job Already canceled in _s3upload');
+    async s3upload(template, fileName, uploadBuffer, chunk_number) {
+        if (this.isCanceled) {
+            throw new Error('Job Already canceled in _s3upload')
         }
-        try {
-            const options = {
-                method: template.template.formdata.method,
-                uri: template.template.formdata.action,
-                formData: template.template.form,
-                headers: {
+        /* template
+            {
+                id: '22ad95551fc3e1b13a7d03d0d9ece3a920201114162441',
+                template: {
+                    formdata: {
+                        method: 'POST',
+                        enctype: 'application/x-www-form-urlencoded',
+                        action: 'https://wetransfer-eu-prod-incoming.s3.eu-west-1.amazonaws.com'
+                    },
+                    form: {
+                        key: 'f2d2476dacc18cb1691e573bf89926d520201114162441/b9c2c6b89342d23cb2153f840375a36203de4cbf/part.000001',
+                        success_action_status: '201',
+                        'x-amz-server-side-encryption': 'AES256',
+                        policy: 'eyJleHBpcmF0aW9uIjoiMjAyMC0xMS0xNFQxNzoyNDo0MloiLCJjb25kaXRpb25zIjpbeyJidWNrZXQiOiJ3ZXRyYW5zZmVyLWV1LXByb2QtaW5jb21pbmcifSx7ImtleSI6ImYyZDI0NzZkYWNjMThjYjE2OTFlNTczYmY4OTkyNmQ1MjAyMDExMTQxNjI0NDEvYjljMmM2Yjg5MzQyZDIzY2IyMTUzZjg0MDM3NWEzNjIwM2RlNGNiZi9wYXJ0LjAwMDAwMSJ9LHsic3VjY2Vzc19hY3Rpb25fc3RhdHVzIjoiMjAxIn0seyJ4LWFtei1zZXJ2ZXItc2lkZS1lbmNyeXB0aW9uIjoiQUVTMjU2In0seyJ4LWFtei1jcmVkZW50aWFsIjoiQUtJQUkzNk5FTklaNDVOVVA2R1EvMjAyMDExMTQvZXUtd2VzdC0xL3MzL2F3czRfcmVxdWVzdCJ9LHsieC1hbXotYWxnb3JpdGhtIjoiQVdTNC1ITUFDLVNIQTI1NiJ9LHsieC1hbXotZGF0ZSI6IjIwMjAxMTE0VDE2MjQ0MloifV19',
+                        'x-amz-credential': 'AKIAI36NENIZ45NUP6GQ/20201114/eu-west-1/s3/aws4_request',
+                        'x-amz-algorithm': 'AWS4-HMAC-SHA256',
+                        'x-amz-date': '20201114T162442Z',
+                        'x-amz-signature': '42ade8c192f87d09e5d1734f524484ecc69c38eb85e7709adcba78870816b3bc'
+                    },
+                    meta: { filefield: 'file' }
+                }
+            } 
+        */
+
+        const endpoint = template.template.formdata.action
+        debug(`s3upload: name: ${fileName} chunk:${chunk_number}. ${endpoint}`)
+
+        const form = new FormData()
+
+        for (let name in template.template.form) {
+            form.append(name, template.template.form[name])
+        }
+        const formDataFileField = (typeof template.template.meta === "object" && typeof template.template.meta.filefield === "string")
+            ? template.template.meta.filefield
+            : 'file'
+        form.append(formDataFileField, uploadBuffer, fileName)
+
+        const options = {
+            method: template.template.formdata.method,
+            body: form,
+            headers: Object.assign(
+                {
                     'Orign': 'https://wetransfer.com',
                     'Refer': 'https://wetransfer.com/',
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36',
                     'Accept': 'application/json'
                 },
-                simple: true,
-                resolveWithFullResponse: false
-            };
-            options.formData['file'] = {
-                value: uploadBuffer,
-                options: {
-                    filename: fileName
-                }
-            };
+                form.getHeaders()
+            )
+        }
 
-            debug(`s3upload: name: ${fileName} chunk:${chunk_number}`)
-
-            return new Promise((resolve, reject) => {
-                this.requestCue.s3upload = requestPromise(options)
-                .then((res) =>{
-                    return resolve(res);
-                }, (err) => {
-                    if(err) debug(`s3Upload error: ${err.message}`)
-                    return reject(err);
-                })
-            });
-        } catch (e) {
-            if(e) debug(`s3Upload error: ${e.message}`)
-            return Promise.reject(e.message);
+        const response = await fetch(endpoint, options)
+        if (!response.ok) {
+            const textBody = await response.text()
+            throw new Error(`Error uploading to S3 ${options.method} ${endpoint} server respond with status ${response.status} ${response.statusText}. ${textBody}`)
         }
     }
-    finalizeFile(fileId, chunk_number) {
-        if(this.isCanceled){
-            return Promise.reject('Job Already canceled in _finalizeFile');
+    async finalizeFile(fileId, chunk_number) {
+        if (this.isCanceled) {
+            throw new Error('Job Already canceled in _finalizeFile')
         }
-        return new Promise((resolve, reject) => {
-            debug(`finalizeFile: id:${fileId} chunk:${chunk_number}`)
-            this.requestCue.finalizeFile = requestPromise(this.formatRequestOption(
-                'PUT',
-                `https://wetransfer.com/api/${this.apiVersion}/transfers/${this.id}/files/${fileId}/finalize`, {
-                    "chunk_count": chunk_number
-                }
-            ))
-            .then((res) =>{
-                return resolve(res);
-            }, (err) => {
-                if(err) debug(`finalizeFile error: ${err.message}`)
-                return reject(err);
-            })
-        });
+
+        debug(`finalizeFile: id:${fileId} chunk:${chunk_number}`)
+        const result = await this.apiRequest('PUT',
+            `https://wetransfer.com/api/${this.apiVersion}/transfers/${this.id}/files/${fileId}/finalize`, {
+            "chunk_count": chunk_number
+        })
+        return result
     }
 
-    cancel(){ return this.emit('cancel'); }
+    cancel() { return this.emit('cancel') }
 }
 
 
 
-exports.upload = function(...args){
-    if (!(this instanceof Upload)) return new Upload(...args);
-};
+exports.upload = function (...args) {
+    if (!(this instanceof Upload)) return new Upload(...args)
+}

@@ -66,9 +66,6 @@ const testDownloadPipe = async function(){
     const downloadStream = await downloadPipe(downloadURL, null, (percent) => { 
         console.log('testDownloadPipe callback', percent) 
     })
-    downloadStream.on('close', () => {
-        console.log('testDownloadPipe', 'close')
-    })
     downloadStream.pipe(fs.createWriteStream(path.resolve(downloadFolder, destName)))
 }
 
@@ -108,11 +105,11 @@ const testUploadLink = function(){
 
 // testDownload();
 // testDownloadPipe()
-// testUploadLink()
+testUploadLink()
 // testUpload()
 
-getInfo("https://we.tl/t-BUr6nd2DAP")
-.then(response =>  {
-    console.log(JSON.stringify(response, null, 2))
-})
-.catch(console.error)    
+// getInfo("https://we.tl/t-BUr6nd2DAP")
+// .then(response =>  {
+//     console.log(JSON.stringify(response, null, 2))
+// })
+// .catch(console.error)    

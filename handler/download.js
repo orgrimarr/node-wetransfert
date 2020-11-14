@@ -26,7 +26,7 @@ exports.download = function (url = '', destPath = null, fileIds = null) {
                 await mkdirp(destPath)
             }
 
-            const destinationStream = (weTransfertObject.content.items.length >= 2) && (!fileIds || fileIds.length < 2)
+            const destinationStream = weTransfertObject.content.items.length >= 2 || (Array.isArray(fileIds) && fileIds.length >= 2)
                 ? unzip.Extract({ path: destPath })
                 : fs.createWriteStream(path.join(destPath, weTransfertObject.content.items[0].name))
 

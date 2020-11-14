@@ -1,53 +1,8 @@
-const cheerio   = require('cheerio')
 const fetch     = require('node-fetch')
 const debug     = require('debug')("wetransfert:getinfos")
 
-const { isValidWetransfertUrl, formatDownloadApiUri, waitAsync } = require('../utils/utils')
+const { isValidWetransfertUrl, formatDownloadApiUri, waitAsync, getContentInfo } = require('../utils/utils')
 
-
-const _preloaded_transfer_Regex = /\_preloaded\_transfer\_/g
-const removeVarDeclarationRegex = /var[\s]*\_preloaded\_transfer\_[\s]*=/g
-const removeLastSemicolon = /(}\;\n)$/g
-
-
-const extractVar = async function (text) {
-    const json = text.replace(removeVarDeclarationRegex, '').replace(removeLastSemicolon, '}')
-    return JSON.parse(json)
-}
-
-const extractScriptContent = function (body) { // Return a list of var
-    return new Promise((resolve, reject) => {
-        const $ = cheerio.load(body)
-        $('script').each(function () {
-            const content = $(this).html()
-            if (_preloaded_transfer_Regex.exec(content)) {
-                return resolve(content)
-            }
-        })
-        return reject('No _preloaded_transfer_ var found !')
-    })
-}
-
-const getContentInfo = async function (urlObj) {
-    debug(`getContentInfo: GET ${urlObj.href}`)
-    const result = await fetch(urlObj.href)
-    if (result.status !== 200) {
-        debug(await result.text())
-        throw new Error(`Error GET ${urlObj.href} server respond with status ${result.status} ${result.statusText}`)
-    }
-    const htmlPage = await result.text()
-    const sessionCookie = result.headers.raw()['set-cookie'].filter(cookie => cookie.includes('session'))[0]
-    const $ = cheerio.load(htmlPage)
-    const csrf = $("meta[name=csrf-token]").attr('content').trim()
- 
-    const scripts = await extractScriptContent(htmlPage)
-    const vars = await extractVar(scripts)
-    return {
-        ...vars,
-        sessionCookie,
-        csrf
-    }
-}
 
 const getDownloadUri = async function (urlObj, sessionCookie, csrf, fileIds) {
     const requestParams = await formatDownloadApiUri(urlObj, fileIds)

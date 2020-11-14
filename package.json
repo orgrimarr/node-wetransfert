@@ -26,8 +26,10 @@
     "prepare": "npm run snyk-protect"
   },
   "dependencies": {
+    "abort-controller": "^3.0.0",
     "cheerio": "^1.0.0-rc.3",
     "debug": "^4.2.0",
+    "form-data": "^3.0.0",
     "node-fetch": "^2.6.1",
     "p-map": "^1.2.0",
     "snyk": "^1.426.0",
