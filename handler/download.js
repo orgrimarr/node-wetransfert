@@ -1,71 +1,58 @@
-const { getInfo }   = require('./getInfo');
-const PProgress     = require('../utils/PProgress');
-const ReqProgress   = require('request-progress');
-const request       = require('request');
-const debug         = require('debug')("wetransfert:download")
-const mkdirp        = require('mkdirp');
-const unzip         = require('unzipper');
-const path          = require('path');
-const fs            = require('fs');
+const { getInfo }       = require('./getInfo')
+const PProgress         = require('../utils/PProgress')
+const fetch             = require('node-fetch')
+const debug             = require('debug')("wetransfert:download")
+const mkdirp            = require('mkdirp')
+const unzip             = require('unzipper')
+const path              = require('path')
+const fs                = require('fs')
+const stream            = require('stream')
+const util              = require('util')
 
+const streamPipeline    = util.promisify(stream.pipeline)
 
-
-exports.download = function(url = '', destPath = null, fileIds = null){
+exports.download = function (url = '', destPath = null, fileIds = null) {
     return new PProgress(async (resolve, reject, progress) => {
-        if(!destPath){
-            return reject(new Error('Not destination path found'));
+        if (!destPath) {
+            return reject(new Error('Not destination path found'))
         }
-        try{
-            const weTransfertObject = await getInfo(url, fileIds);
-            if(!weTransfertObject) return reject(new Error('Not a valid url'));
-            const downloadProcess = ReqProgress(request(weTransfertObject.downloadURI), {
-               throttle: 500,                    // Throttle the progress event to 2000ms, defaults to 1000ms 
-               delay: 0,                       // Only start to emit after 1000ms delay, defaults to 0ms 
-               // lengthHeader: 'x-transfer-length'  // Length header to use, defaults to content-length 
+        try {
+            const weTransfertObject = await getInfo(url, fileIds)
+            if (!weTransfertObject) {
+                return reject(new Error('Not a valid url'))
+            }
+
+            if (!fs.existsSync(destPath)) {
+                await mkdirp(destPath)
+            }
+
+            const destinationStream = weTransfertObject.content.items.length >= 2 || (Array.isArray(fileIds) && fileIds.length >= 2)
+                ? unzip.Extract({ path: destPath })
+                : fs.createWriteStream(path.join(destPath, weTransfertObject.content.items[0].name))
+
+            const response = await fetch(weTransfertObject.downloadURI)
+            if (!response.ok) {
+                throw new Error(`Unexpected response ${response.status} ${response.statusText}`)
+            }
+            debug('get total size', parseInt(response.headers.get('content-length')), weTransfertObject.content.size)
+            const size = parseInt(response.headers.get('content-length')) || weTransfertObject.content.size
+
+            let uploadedByte = 0
+            const progressStream = new stream.PassThrough()
+            progressStream.on('data', chunk => {
+                uploadedByte += chunk.length
+                const percent = uploadedByte / size
+                progress(percent.toFixed(2))
             })
-                .on('progress', (state) => {
-                    // The state is an object that looks like this: 
-                    // { 
-                    //     percent: 0.5,               // Overall percent (between 0 to 1) 
-                    //     speed: 554732,              // The download speed in bytes/sec 
-                    //     size: { 
-                    //         total: 90044871,        // The total payload size in bytes 
-                    //         transferred: 27610959   // The transferred payload size in bytes 
-                    //     }, 
-                    //     time: { 
-                    //         elapsed: 36.235,        // The total elapsed seconds since the start (3 decimals) 
-                    //         remaining: 81.403       // The remaining seconds to finish (3 decimals) 
-                    //     } 
-                    // } 
-                    progress(state.percent.toFixed(2));
-                })
-                .on('error', (err) => {
-                    return reject(err);
-                })
-                .on('end', () => {
-                    return resolve(weTransfertObject);
-                })
-            if((weTransfertObject.content.items.length >= 2) && !fileIds){
-                if(!fs.existsSync(destPath)){
-                    await mkdirp(destPath)
-                }
-                downloadProcess
-                    .pipe(unzip.Extract({ path: destPath }))
-            }
-            else{
-                if(!fs.existsSync(destPath)){
-                    await mkdirp(destPath)
-                }
-                downloadProcess
-                    .pipe(fs.createWriteStream(
-                        path.join(destPath, weTransfertObject.content.items[0].name)
-                    ));
-            }
+
+            await streamPipeline(response.body, progressStream, destinationStream)
+
+            return resolve(weTransfertObject)
         }
-        catch(e){
-            return reject(e);
+        catch (e) {
+            return reject(e)
         }
-    });
+    })
 }
 
 
@@ -74,21 +61,24 @@ exports.download = function(url = '', destPath = null, fileIds = null){
     .then(files.pipe(WritableStream))
     .catch(console.error)
 */
-exports.downloadPipe = async function(url = ''){
-    try{
-        debug("downloadPipe", url)
-        const weTransfertObject = await getInfo(url);
-        debug("weTransfertObject", weTransfertObject)
-        debug("weTransfertObject.downloadURI", weTransfertObject.downloadURI)
-        if(!weTransfertObject) {
-            throw new Error('Not a valid url');
-        }
-        return ReqProgress(request(weTransfertObject.downloadURI), {
-           throttle: 500,
-           delay: 0,
-        })
+exports.downloadPipe = async function (url = '', fileIds = null, progressCallback = null) {
+    if(typeof progressCallback === "function"){
+        progressCallback = function(){}
     }
-    catch(error){
-        throw error
+
+    debug("downloadPipe", url)
+    const weTransfertObject = await getInfo(url, fileIds = null)
+    debug("weTransfertObject", weTransfertObject)
+    debug("weTransfertObject.downloadURI", weTransfertObject.downloadURI)
+    if (!weTransfertObject) {
+        throw new Error('Not a valid url')
     }
+
+    const size = weTransfertObject.content.size
+    const response = await fetch(weTransfertObject.downloadURI)
+    if (!response.ok) {
+        throw new Error(`Unexpected response ${response.status} ${response.statusText}`)
+    }
+
+    return response.body
 }

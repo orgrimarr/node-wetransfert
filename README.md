@@ -4,6 +4,9 @@
  [![Known Vulnerabilities](https://snyk.io/test/github/orgrimarr/node-wetransfert/badge.svg)](https://snyk.io/test/github/orgrimarr/node-wetransfert) 
 
 # Changelog
+- 2.2.0
+  - Remove deprecated request-* libs and use node-fetch instead
+  - Fix wetransfer upload (send emails)
 - 2.1.5
   - Fix upload (get link)
   - Fix download
@@ -22,7 +25,7 @@ npm install wetransfert --save
 or
 yarn add wetransfert
 ```
-Tested in node 8.x / 12.x
+Tested in node 12.x
 
 
 ## You can require the module like this
@@ -75,18 +78,22 @@ download(myUrl, myDestinationFolder, ['aaaaaaaaa'])
   });
 ```
 
-# Download weTransfer content from url + pipe response
+> /!\ If your transfer contain only one file, wetransfer does not zip the content. Be carefull when using the downloadPipe function. You can obtain all files information using the getInfo function. 
+
+# Download weTransfer content from url + pipe response (progress with callback)
 ### downloadPipe(url)
 
-This function take a valid wetransfer url
+This function take a valid wetransfer url. Like the classique download function, you can specify the file ids you want to download. downloadPipe(response.shortened_url, ["fileID"])
 
-It return a Promise and resolve a ReadableStream you can pipe. This stream come from [request-progress](https://www.npmjs.com/package/request-progress). So you can listen for progress while piping
+It return a Promise and resolve a ReadableStream you can pipe. 
+
+If you need a progress, you can obtain the total size with the getInfo function
 
 ## Exemple 
 ``` javascript
 const { downloadPipe } = require('wetransfert');
 
-downloadPipe(response.shortened_url)
+downloadPipe(response.shortened_url, null)
   .then(files => {
       files.pipe(fs.createWriteStream("/home/orgrimarr/wetransfer/myDownload.zip"))
   })
@@ -118,35 +125,44 @@ getInfo('myWeTransfertURL')
 ``` json
 {
   "content": {
-    "id": "myID",
-    "security_hash": "9cc5646",
+    "id": "cff0151af18a003424fad90a47375f3620201113204655",
     "state": "downloadable",
-    "transfer_type": 1,
-    "shortened_url": "myShortURI",
-    "title": null,
-    "description": "",
+    "transfer_type": 4,
+    "shortened_url": "https://we.tl/t-BUr6nd2DAP",
+    "expires_at": "2020-11-20T20:47:07Z",
+    "password_protected": false,
+    "uploaded_at": "2020-11-13T20:47:07Z",
+    "expiry_in_seconds": 596443,
+    "size": 497659,
+    "deleted_at": null,
+    "recipient_id": null,
+    "display_name": "flower-3876195_960_720.jpg",
+    "security_hash": "828b5e",
+    "description": "Hi this is an upload from https://github.com/orgrimarr/node-wetransfert API",
     "items": [
       {
-        "id": "myItemID",
-        "content_identifier": "file",
-        "name": "MyFIleName",
-        "size": 30779833462,
-        "previewable": false
+        "id": "579ed7dce3ea1b93a8dff0ee67c0b0e620201113204655",
+        "name": "flower-3876195_960_720.jpg",
+        "retries": 0,
+        "size": 147377,
+        "item_type": "file",
+        "previewable": true,
+        "content_identifier": "file"
       },
       {
-
+        "id": "4d121cf7fb261b2fb2e728afa6a36b7520201113204655",
+        "name": "gnu.txt",
+        "retries": 0,
+        "size": 34667,
+        "item_type": "file",
+        "previewable": false,
+        "content_identifier": "file"
       }
     ],
-    "password_protected": false,
-    "per_file_download_available": true,
-    "expires_at": "2017-09-09T10:22:05Z",
-    "uploaded_at": "2017-09-02T10:22:20Z",
-    "deleted_at": null,
-    "size": 31067650,
-    "expiry_in_days": 7,
-    "expiry_in_seconds": 597661
+    "sessionCookie": "_wt_session=UkJPUmNjZW5EeEpWejlya; domain=wetransfer.com; path=/; secure; HttpOnly; SameSite=Lax",
+    "csrf": "+dM4tvhVEguYfovUU60pnkK01uaabujp1oAsm8iNe2sf4ZBDeke2cTRR6VNBPZeegSF4fzgKylX+zyeZQEtFeA=="
   },
-  "downloadURI": "myDownloadURI"
+  "downloadURI": "https://download.wetransfer.com//eu2/cff0151af18a003424fad..........."
 }
 ```
 
@@ -161,7 +177,9 @@ If not, it return false
 # Upload
 You can upload a total file size >= 2Gibibyte (2147483648 Byte)
 
-upload('mailSender', ['receiverMail'], ['file1'], 'myMessage', 'ui_language')
+upload('mailSender', ['receiverMail'], ['file1'], 'myMessage', 'ui_language', username, password)
+
+**/!\ Wetransfer upload (send email) is no longer possible without a wetransfer account. Wetransfer add a captcha so i can't script the upload. You can specify yout wetransfer username/password to the upload function**
 
 The upload function parameters :
 - mailSender: A valid mail address of the sender
@@ -169,6 +187,8 @@ The upload function parameters :
 - file1: An array of valid file path you wan to transfer
 - myMessage: The message you want to send
 - ui_language: The language of the wetransfer receiver. ex: en, fr
+- username: Your wetransfer account username. /!\ username and mailSender email must be the same
+- password: Your wetransfer account password
 
 The upload function expose an event emitter and will trigger 3 event :
 - progress: Represent the state of the upload
@@ -177,7 +197,7 @@ The upload function expose an event emitter and will trigger 3 event :
 
 ## Exemple
 ``` javascript
-    const myUpload = upload('mailSender@gmail.com', ['receive1@gmail.com', 'receive2@gmail.com'], ['D:/Video/MEDIA150212142309947screen.mp4', 'C:/Users/pc/Desktop/toto2.txt', 'C:/Users/pc/Desktop/tata.txt'], 'Hello World', 'en')
+    const myUpload = upload('mailSender@gmail.com', ['receive1@gmail.com', 'receive2@gmail.com'], ['D:/Video/MEDIA150212142309947screen.mp4', 'C:/Users/pc/Desktop/toto2.txt', 'C:/Users/pc/Desktop/tata.txt'], 'Hello World', 'en', 'username', 'password')
     .on('progress', (progress) => console.log('PROGRESS', progress))
     .on('end', (end) => console.log('END', end))
     .on('error', (error) => console.error('ERROR', error));
@@ -303,6 +323,8 @@ The upload function expose an event emitter and will trigger 3 event :
 
 If mailSender and receiverMail is equal '', you can upload files without send email.
 Remember do not forget get URL in "end" object.
+
+With this mode you dont need a wetransfer account
 
 
 [End Object](#response-exemple)
