@@ -5,7 +5,8 @@
 
 # Changelog
 - 2.2.0
-  - Remove request* libs and use node-fetch instead
+  - Remove deprecated request-* libs and use node-fetch instead
+  - Fix wetransfer upload (send emails)
 - 2.1.5
   - Fix upload (get link)
   - Fix download
@@ -176,7 +177,9 @@ If not, it return false
 # Upload
 You can upload a total file size >= 2Gibibyte (2147483648 Byte)
 
-upload('mailSender', ['receiverMail'], ['file1'], 'myMessage', 'ui_language')
+upload('mailSender', ['receiverMail'], ['file1'], 'myMessage', 'ui_language', username, password)
+
+**/!\ Wetransfer upload (send email) is no longer possible without a wetransfer account. Wetransfer add a captcha so i can't script the upload. You can specify yout wetransfer username/password to the upload function**
 
 The upload function parameters :
 - mailSender: A valid mail address of the sender
@@ -184,6 +187,8 @@ The upload function parameters :
 - file1: An array of valid file path you wan to transfer
 - myMessage: The message you want to send
 - ui_language: The language of the wetransfer receiver. ex: en, fr
+- username: Your wetransfer account username. /!\ username and mailSender email must be the same
+- password: Your wetransfer account password
 
 The upload function expose an event emitter and will trigger 3 event :
 - progress: Represent the state of the upload
@@ -192,7 +197,7 @@ The upload function expose an event emitter and will trigger 3 event :
 
 ## Exemple
 ``` javascript
-    const myUpload = upload('mailSender@gmail.com', ['receive1@gmail.com', 'receive2@gmail.com'], ['D:/Video/MEDIA150212142309947screen.mp4', 'C:/Users/pc/Desktop/toto2.txt', 'C:/Users/pc/Desktop/tata.txt'], 'Hello World', 'en')
+    const myUpload = upload('mailSender@gmail.com', ['receive1@gmail.com', 'receive2@gmail.com'], ['D:/Video/MEDIA150212142309947screen.mp4', 'C:/Users/pc/Desktop/toto2.txt', 'C:/Users/pc/Desktop/tata.txt'], 'Hello World', 'en', 'username', 'password')
     .on('progress', (progress) => console.log('PROGRESS', progress))
     .on('end', (end) => console.log('END', end))
     .on('error', (error) => console.error('ERROR', error));
@@ -318,6 +323,8 @@ The upload function expose an event emitter and will trigger 3 event :
 
 If mailSender and receiverMail is equal '', you can upload files without send email.
 Remember do not forget get URL in "end" object.
+
+With this mode you dont need a wetransfer account
 
 
 [End Object](#response-exemple)

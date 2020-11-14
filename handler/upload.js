@@ -5,10 +5,9 @@ const utils = require('../utils/utils')
 const { default: fetch } = require('node-fetch')
 const AbortController = require("abort-controller")
 const FormData = require('form-data')
-const { type } = require('os')
 
 class Upload extends EventEmitter {
-    constructor(mailFrom = '', mailRecipients = '', payloads = [], message = '', ui_language = 'en') {
+    constructor(mailFrom = '', mailRecipients = '', payloads = [], message = '', ui_language = 'en', user = null, password = "") {
         super()
         this.apiVersion = "v4"
         this.maxUploadSize = 2147483648
@@ -43,6 +42,11 @@ class Upload extends EventEmitter {
         this.fatalError = false
         this.csrfToken = ""
         this.sessionCookie = ""
+        this.user = user
+        this.password = password
+        
+        this.loginInfos = null
+
         this.on('cancel', (e) => {
             if (!this.isCanceled) {
                 this.cancelJob()
@@ -62,118 +66,130 @@ class Upload extends EventEmitter {
             this.emit('progress', 1)
         })
 
-        this.lunchupload()
+        setImmediate(() => {
+            this.lunchupload()
+                .catch(error => {
+                    debug(error)
+                    if (!this.isCanceled) {
+                        this.emit('error', error)
+                    }
+                })
+        })
     }
 
     //Start upload
     async lunchupload() {
-        try {
-            // verification
-            if (this.mailFrom !== '' || this.mailRecipients !== '') {
-                if (!this.mailFrom || typeof this.mailFrom !== 'string' || !this.validateEmail(this.mailFrom)) {
-                    return this.emit('error', new Error('No mail from found or mail from is not a string or is not a valide email'))
-                }
-                if (!this.mailRecipients || !Array.isArray(this.mailRecipients) || this.mailRecipients.length < 1) {
-                    return this.emit('error', new Error('No mail recipients found or is not an array'))
-                }
-                for (let i in this.mailRecipients) {
-                    const currentMail = this.mailRecipients[i]
-                    if (typeof currentMail !== 'string' || !this.validateEmail(currentMail)) {
-                        return this.emit('error', new Error('No mail recipient found or mail recipient is not a valide email'))
-                    }
+        // verification
+        if (this.mailFrom !== '' || this.mailRecipients !== '') {
+            if (!this.mailFrom || typeof this.mailFrom !== 'string' || !this.validateEmail(this.mailFrom)) {
+                return this.emit('error', new Error('No mail from found or mail from is not a string or is not a valide email'))
+            }
+            if (!this.mailRecipients || !Array.isArray(this.mailRecipients) || this.mailRecipients.length < 1) {
+                return this.emit('error', new Error('No mail recipients found or is not an array'))
+            }
+            for (let i in this.mailRecipients) {
+                const currentMail = this.mailRecipients[i]
+                if (typeof currentMail !== 'string' || !this.validateEmail(currentMail)) {
+                    return this.emit('error', new Error('No mail recipient found or mail recipient is not a valide email'))
                 }
             }
+        }
 
-            debug(`from: ${this.mailFrom}`)
-            debug(`from: ${Array.isArray(this.mailRecipients) ? this.mailRecipients.join(', ') : this.mailRecipients}`)
+        debug(`from: ${this.mailFrom}`)
+        debug(`from: ${Array.isArray(this.mailRecipients) ? this.mailRecipients.join(', ') : this.mailRecipients}`)
 
-            const knowFileName = new Set()
-            for (let payload of this.payloads) {
-                // Case Payload is already a Payload instance
-                if (payload instanceof Payload) {
-                    if (knowFileName.has(payload.name)) {
-                        return this.emit('error', new Error(`Error duplicate file name ${payload.name}`))
-                    }
-                    knowFileName.add(payload.name)
-                    this.fileToUpload[payload.name] = payload
-                    debug(`addPaload: type:PayloadObject name:${payload.name}`)
-                    continue
+        const knowFileName = new Set()
+        for (let payload of this.payloads) {
+            // Case Payload is already a Payload instance
+            if (payload instanceof Payload) {
+                if (knowFileName.has(payload.name)) {
+                    return this.emit('error', new Error(`Error duplicate file name ${payload.name}`))
                 }
+                knowFileName.add(payload.name)
+                this.fileToUpload[payload.name] = payload
+                debug(`addPaload: type:PayloadObject name:${payload.name}`)
+                continue
+            }
 
-                // Case Payload is path
-                if (typeof payload === "string") {
-                    const curPayload = new Payload({
-                        filePath: payload
-                    })
-                    if (knowFileName.has(curPayload.name)) {
-                        return this.emit('error', new Error(`Error duplicate file name ${curPayload.name}`))
-                    }
-                    knowFileName.add(curPayload.name)
-                    this.fileToUpload[curPayload.name] = curPayload
-                    debug(`addPaload: type:path name:${curPayload.name}`)
-                    continue
+            // Case Payload is path
+            if (typeof payload === "string") {
+                const curPayload = new Payload({
+                    filePath: payload
+                })
+                if (knowFileName.has(curPayload.name)) {
+                    return this.emit('error', new Error(`Error duplicate file name ${curPayload.name}`))
                 }
+                knowFileName.add(curPayload.name)
+                this.fileToUpload[curPayload.name] = curPayload
+                debug(`addPaload: type:path name:${curPayload.name}`)
+                continue
+            }
 
-                // Case object definition
-                if (typeof payload === "object") {
-                    const curPayload = new Payload(payload)
-                    if (knowFileName.has(curPayload.name)) {
-                        return this.emit('error', `Error duplicate file name ${curPayload.name}`)
-                    }
-                    knowFileName.add(curPayload.name)
-                    this.fileToUpload[curPayload.name] = curPayload
-                    debug(`addPaload: type:ObjectDefinition name:${curPayload.name}`)
-                    continue
+            // Case object definition
+            if (typeof payload === "object") {
+                const curPayload = new Payload(payload)
+                if (knowFileName.has(curPayload.name)) {
+                    return this.emit('error', `Error duplicate file name ${curPayload.name}`)
                 }
-
-            }
-            if (knowFileName.length < 1) {
-                return this.emit('error', new Error('you must provide at least one file'))
-            }
-
-            debug(`${knowFileName.size} file to upload`)
-
-            this.totalSizeToUpload = 0
-            this.totalSizeUploaded = 0
-            this.startTime = Date.now()
-
-            for (let i in this.fileToUpload) {
-                this.totalSizeToUpload += typeof this.fileToUpload[i].size !== "number" ? parseInt(this.fileToUpload[i].size, 10) : this.fileToUpload[i].size
-            }
-            if (this.totalSizeToUpload > this.maxUploadSize) {
-                return this.emit('error', new Error(`Total fileSize cant exeed 2Gibibyte, your total size is ${this.totalSizeToUpload} Byte only accept ${this.maxUploadSize} Byte`))
+                knowFileName.add(curPayload.name)
+                this.fileToUpload[curPayload.name] = curPayload
+                debug(`addPaload: type:ObjectDefinition name:${curPayload.name}`)
+                continue
             }
 
-            this.totalProgress.size.total = this.totalSizeToUpload
+        }
+        if (knowFileName.length < 1) {
+            return this.emit('error', new Error('you must provide at least one file'))
+        }
 
-            // start workflow
+        debug(`${knowFileName.size} file to upload`)
+
+        this.totalSizeToUpload = 0
+        this.totalSizeUploaded = 0
+        this.startTime = Date.now()
+
+        for (let i in this.fileToUpload) {
+            this.totalSizeToUpload += typeof this.fileToUpload[i].size !== "number" ? parseInt(this.fileToUpload[i].size, 10) : this.fileToUpload[i].size
+        }
+        if (this.totalSizeToUpload > this.maxUploadSize) {
+            return this.emit('error', new Error(`Total fileSize cant exeed 2Gibibyte, your total size is ${this.totalSizeToUpload} Byte only accept ${this.maxUploadSize} Byte`))
+        }
+
+        this.totalProgress.size.total = this.totalSizeToUpload
+
+        // start workflow
+        if(this.user && this.password){
+            const loginInfos = await utils.login(this.user, this.password)
+            this.loginInfos = loginInfos.data
+            this.csrfToken = loginInfos.csrf
+            this.sessionCookie = loginInfos.sessionCookie
+            debug('login setCookie', this.sessionCookie)
+            debug('login csrfToken', this.csrfToken)
+            debug('login loginInfos', JSON.stringify(this.loginInfos, null, 2))
+        }
+        else {
             await this.getUploadCsrfToken()
-            debug('csrfToken', this.csrfToken)
+        }
+        debug('csrfToken', this.csrfToken)
 
-            const res = await this.emailRequest()
-            this.id = res.id
-            for (let i in this.fileToUpload) {
-                const currentFile = this.fileToUpload[i]
-                const fileAttr = res.files.find(elem => elem.name === currentFile.name)
-                this.fileToUpload[i].chunk_size = fileAttr.chunk_size
-                this.fileToUpload[i].id = fileAttr.id
-                await this.uploadFileWF({
-                    id: fileAttr.id,
-                    name: currentFile.name,
-                    chunk_size: fileAttr.chunk_size,
-                    stream: currentFile.stream,
-                    size: currentFile.size
-                }
-                )
+        const res = await this.emailRequest()
+        this.id = res.id
+        for (let i in this.fileToUpload) {
+            const currentFile = this.fileToUpload[i]
+            const fileAttr = res.files.find(elem => elem.name === currentFile.name)
+            this.fileToUpload[i].chunk_size = fileAttr.chunk_size
+            this.fileToUpload[i].id = fileAttr.id
+            await this.uploadFileWF({
+                id: fileAttr.id,
+                name: currentFile.name,
+                chunk_size: fileAttr.chunk_size,
+                stream: currentFile.stream,
+                size: currentFile.size
             }
-            const finalRes = await this.finalize()
-            return this.emit('end', finalRes)
+            )
         }
-        catch (error) {
-            if (!this.isCanceled) {
-                this.emit('error', error)
-            }
-        }
+        const finalRes = await this.finalize()
+        return this.emit('end', finalRes)
     }
 
     //Utils
@@ -204,9 +220,10 @@ class Upload extends EventEmitter {
 
             const requestConfig = this.formatRequestOption(method, url, body)
             const response = await fetch(url, requestConfig)
+            debug('apiRequest', method, url, response.status, response.statusText)
             if (!response.ok) {
                 const textBody = await response.text()
-                throw new Error(`Error ${method} ${url} server respond with status ${result.status} ${result.statusText}. ${textBody}`)
+                throw new Error(`Error ${method} ${url} server respond with status ${response.status} ${response.statusText}. ${textBody}`)
             }
             const jsonBody = await response.json()
             return jsonBody
@@ -250,9 +267,23 @@ class Upload extends EventEmitter {
             body.from = this.mailFrom
             url = `https://wetransfer.com/api/${this.apiVersion}/transfers/email`
         }
+        if(this.loginInfos && Array.isArray(this.loginInfos.memberships) && this.loginInfos.memberships.length > 0){
+            const membership = this.loginInfos.memberships[0]
+            if(membership && typeof membership === "object" && typeof membership.account === "object" && membership.account.id){
+                body.account_id = membership.account.id
+            }
+        }
+        debug(body)
 
         debug("emailRequest")
         const result = await this.apiRequest('POST', url, body)
+        if(result.message === "email_verification_required"){
+            throw new Error(`Error. You must be loged in. Wetransfer now use captcha in free mode. Please provide a user/password to the upload function`)
+        }
+        if(!result.id || !Array.isArray(result.files)){
+            throw new Error(`Error. Invalid email response from wetransfer. ${JSON.stringify(result)}`)
+        }
+        
         return result
     }
     async finalize() {
@@ -507,8 +538,6 @@ class Upload extends EventEmitter {
     cancel() { return this.emit('cancel') }
 }
 
-
-
-exports.upload = function (...args) {
-    if (!(this instanceof Upload)) return new Upload(...args)
+exports.upload = function (mailFrom, mailRecipients, payloads, message, ui_language, user, password) {
+    if (!(this instanceof Upload)) return new Upload(mailFrom, mailRecipients, payloads, message, ui_language, user, password)
 }

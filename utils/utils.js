@@ -132,12 +132,20 @@ exports.waitAsync = function(time, data){
     })
 }
 
-const getWetransferPageContent = async function(endpoint = wetransferEndpoint){
+const getWetransferPageContent = async function(endpoint = wetransferEndpoint, cookies){
     debug(`getWetransferPageContent: GET ${endpoint}`)
     if(typeof endpoint === 'object'){
         endpoint = urlUtils.format(endpoint)
     }
-    const result = await fetch(endpoint)
+
+    const options = {}
+    if(cookies){
+        options.headers = {
+            'cookie': cookies,
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36'
+        }
+    }
+    const result = await fetch(endpoint, options)
     if (result.status !== 200) {
         debug(await result.text())
         throw new Error(`Error GET ${endpoint} server respond with status ${result.status} ${result.statusText}`)
@@ -165,5 +173,43 @@ exports.getContentInfo = async function (urlObj) {
         ...vars,
         sessionCookie,
         csrf
+    }
+}
+
+exports.login = async function(user, password){
+    debug(`Login ${user}`)
+    const endpoint = `https://wetransfer.com/api/${apiVersion}/auth/session`
+
+    const loginSessionInfos = await getWetransferPageContent()
+
+    const result = await fetch(endpoint, {
+        method: 'POST',
+        body: JSON.stringify({
+            "email": user,
+            "password": password,
+            "remember_me": false
+        }),
+        'headers': {
+            'cookie': loginSessionInfos.sessionCookie,
+            'Content-Type': 'application/json',
+            'x-csrf-token': loginSessionInfos.csrf,
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36'
+        }
+    })
+    if (!result.ok) {
+        const text = await result.text()
+        throw new Error(`Error GET ${endpoint} server respond with status ${result.status} ${result.statusText}. ${text}`)
+    }
+    const data = await result.json()
+
+    debug(data)
+
+    const newCookie = result.headers.raw()['set-cookie'].filter(cookie => cookie.includes('session'))[0]
+    const infos = await getWetransferPageContent(wetransferEndpoint, newCookie)
+
+    return {
+        sessionCookie: infos.sessionCookie,
+        csrf: infos.csrf,
+        data: data
     }
 }

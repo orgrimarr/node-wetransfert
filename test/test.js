@@ -1,5 +1,5 @@
 process.env.DEBUG = "wetransfert*"
-const { getInfo, isValidWetransfertUrl, download, downloadPipe ,upload, waitForDownloadable, Payload } = require('../index');
+const { getInfo, isValidWetransfertUrl, download, downloadPipe ,upload, waitForDownloadable, Payload } = require('../index')
 const fs = require('fs')
 const path = require('path')
 
@@ -28,7 +28,7 @@ const testSamples = [
 
 /////// DOWNLOAD SECTION ////////
 // Download URI : ex: https://wetransfer.com/downloads/5ea8acc81f4da9f731da85c6cb162a1d20180404153650/9bf4079e384a573d2e12fb4a84e655d520180404153650/0b8279
-const downloadURL = 'https://we.tl/t-BUr6nd2DAP';
+const downloadURL = 'https://we.tl/t-BUr6nd2DAP'
 // Your download folder, ex : /home/orgrimarr/wetransfer
 const downloadFolder = path.resolve(__dirname, './tmp')
 
@@ -46,19 +46,21 @@ const language = 'en'
 // Time after which the quest will be canceled, if set to 0 the request will not be canceled. ex 0
 const cancel = 0
 
+const username = ""
+const password = ""
 
 /////// TEST SECTION //////////
 const testDownload = function(fileIds = null){
     download(downloadURL, downloadFolder, fileIds)
         .onProgress(progress => {
-            console.log('progress', progress);
+            console.log('progress', progress)
         })
         .then((res) => {
-            console.log(res); // success
+            console.log(res) // success
         })
         .catch((err) => {
-            console.error('error  ', err);
-        });
+            console.error('error  ', err)
+        })
 }
 
 const testDownloadPipe = async function(){
@@ -71,20 +73,21 @@ const testDownloadPipe = async function(){
 
 const testUpload = function(sender = emailSender, receiver = reveiverSender, toUpload = filesToUpload, content = body, lang = language){
     return new Promise((resolve, reject) => {
-        const myUpload = upload(sender, receiver, toUpload, content, lang)
-        .on('progress', (progress) => console.log('PROGRESS', progress))
-        .on('end', (end) => {
+        const myUpload = upload(sender, receiver, toUpload, content, lang, username, password)
+        
+        myUpload.on('progress', (progress) => console.log('PROGRESS', progress))
+        myUpload.on('error', (error) => {
+            return reject(error)
+        })
+        myUpload.on('end', (end) => {
             return resolve(end)
         })
-        .on('error', (error) => {
-            return reject(error)
-        });
     
         if(cancel > 0){
             console.log("cance upload !")
             setTimeout(function(){
-                myUpload.cancel();
-            }, cancel);
+                myUpload.cancel()
+            }, cancel)
         }
     })
 }
@@ -96,17 +99,24 @@ const testUploadLink = function(){
     .on('error', (error) => {
         if(error) console.error('ERROR', error.message)
         console.log("error", error)
-    });
+    })
+
+    if(cancel > 0){
+        console.log("cance upload !")
+        setTimeout(function(){
+            myUpload.cancel()
+        }, cancel)
+    }
 }
 
 
 
 // Uncomment 
 
-// testDownload();
+// testDownload()
 // testDownloadPipe()
-testUploadLink()
-// testUpload()
+// testUploadLink()
+testUpload().then(console.log).catch(console.error)
 
 // getInfo("https://we.tl/t-BUr6nd2DAP")
 // .then(response =>  {
