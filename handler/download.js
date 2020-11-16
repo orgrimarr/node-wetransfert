@@ -8,6 +8,7 @@ const path              = require('path')
 const fs                = require('fs')
 const stream            = require('stream')
 const util              = require('util')
+const utils             = require('../utils/utils')
 
 const streamPipeline    = util.promisify(stream.pipeline)
 
@@ -30,7 +31,9 @@ exports.download = function (url = '', destPath = null, fileIds = null) {
                 ? unzip.Extract({ path: destPath })
                 : fs.createWriteStream(path.join(destPath, weTransfertObject.content.items[0].name))
 
-            const response = await fetch(weTransfertObject.downloadURI)
+            const response = await fetch(weTransfertObject.downloadURI, {
+                agent: utils.getHttpAgent()
+            })
             if (!response.ok) {
                 throw new Error(`Unexpected response ${response.status} ${response.statusText}`)
             }
@@ -75,7 +78,9 @@ exports.downloadPipe = async function (url = '', fileIds = null, progressCallbac
     }
 
     const size = weTransfertObject.content.size
-    const response = await fetch(weTransfertObject.downloadURI)
+    const response = await fetch(weTransfertObject.downloadURI, {
+        agent: utils.getHttpAgent()
+    })
     if (!response.ok) {
         throw new Error(`Unexpected response ${response.status} ${response.statusText}`)
     }

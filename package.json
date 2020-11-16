@@ -1,6 +1,6 @@
 {
   "name": "wetransfert",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Download/Upload wetransfer content with nodeJS - Unofficial API for wetransfer",
   "keywords": [
     "file transfer",
@@ -30,6 +30,7 @@
     "cheerio": "^1.0.0-rc.3",
     "debug": "^4.2.0",
     "form-data": "^3.0.0",
+    "https-proxy-agent": "^5.0.0",
     "node-fetch": "^2.6.1",
     "p-map": "^1.2.0",
     "snyk": "^1.426.0",

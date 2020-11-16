@@ -211,7 +211,8 @@ class Upload extends EventEmitter {
                 'x-csrf-token': this.csrfToken,
                 'Accept-Language': 'fr-FR,fr;q=0.8,en-US;q=0.6,en;q=0.4',
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36'
-            }
+            },
+            agent: utils.getHttpAgent()
         }
     }
     async apiRequest(method, url, body) {
@@ -513,7 +514,8 @@ class Upload extends EventEmitter {
                     'Accept': 'application/json'
                 },
                 form.getHeaders()
-            )
+            ),
+            agent: utils.getHttpAgent()
         }
 
         const response = await fetch(endpoint, options)

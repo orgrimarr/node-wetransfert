@@ -116,10 +116,10 @@ const testUploadLink = function(){
 // testDownload()
 // testDownloadPipe()
 // testUploadLink()
-testUpload().then(console.log).catch(console.error)
+// testUpload().then(console.log).catch(console.error)
 
-// getInfo("https://we.tl/t-BUr6nd2DAP")
-// .then(response =>  {
-//     console.log(JSON.stringify(response, null, 2))
-// })
-// .catch(console.error)    
+getInfo("https://we.tl/t-BUr6nd2DAP")
+.then(response =>  {
+    console.log(JSON.stringify(response, null, 2))
+})
+.catch(console.error)    

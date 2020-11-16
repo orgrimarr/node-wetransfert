@@ -2,6 +2,8 @@ const urlUtils          = require('url')
 const fetch             = require('node-fetch')
 const debug             = require('debug')('wetransfert:utils')
 const cheerio           = require('cheerio')
+const HttpsProxyAgent   = require('https-proxy-agent')
+const https             = require('https')
 
 const wetransferEndpoint = "https://wetransfer.com/"
 const apiVersion = "v4"
@@ -16,6 +18,14 @@ const _preloaded_transfer_Regex = /\_preloaded\_transfer\_/g
 const removeVarDeclarationRegex = /var[\s]*\_preloaded\_transfer\_[\s]*=/g
 const removeLastSemicolon = /(}\;\n)$/g
 
+const getHttpAgent = function(){
+    const proxy = process.env.http_proxy || process.env.HTTP_PROXY || process.env.https_proxy || process.env.HTTPS_PROXY
+    if(proxy){
+        return new HttpsProxyAgent(proxy)
+    }
+    return https.globalAgent
+}
+exports.getHttpAgent = getHttpAgent
 
 const extractVar = async function (text) {
     const json = text.replace(removeVarDeclarationRegex, '').replace(removeLastSemicolon, '}')
@@ -39,7 +49,8 @@ const expandUrl = async function(shortUrl) {
     const result = await fetch(shortUrl, {
         method: "HEAD",
         redirect: 'follow',
-        follow: 20
+        follow: 20,
+        agent: getHttpAgent()
     })
     const longUrl = result.url
     debug(`expandUrl: "${shortUrl}" => "${longUrl}"`)
@@ -138,7 +149,9 @@ const getWetransferPageContent = async function(endpoint = wetransferEndpoint, c
         endpoint = urlUtils.format(endpoint)
     }
 
-    const options = {}
+    const options = {
+        agent: getHttpAgent()
+    }
     if(cookies){
         options.headers = {
             'cookie': cookies,
@@ -189,12 +202,13 @@ exports.login = async function(user, password){
             "password": password,
             "remember_me": false
         }),
-        'headers': {
+        headers: {
             'cookie': loginSessionInfos.sessionCookie,
             'Content-Type': 'application/json',
             'x-csrf-token': loginSessionInfos.csrf,
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36'
-        }
+        },
+        agent: getHttpAgent()
     })
     if (!result.ok) {
         const text = await result.text()

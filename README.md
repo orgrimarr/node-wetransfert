@@ -4,6 +4,8 @@
  [![Known Vulnerabilities](https://snyk.io/test/github/orgrimarr/node-wetransfert/badge.svg)](https://snyk.io/test/github/orgrimarr/node-wetransfert) 
 
 # Changelog
+- 2.3.0
+  - Add proxy support
 - 2.2.0
   - Remove deprecated request-* libs and use node-fetch instead
   - Fix wetransfer upload (send emails)
@@ -19,6 +21,23 @@
   - Fix dependencies security issues
   - Fix download (Thanks @cylwin). The upload part is still broken
 
+# Table of content
+- [Install](#Install)
+- [Use custom proxy](#Use-custom-proxy)
+- [Download](#Download-weTransfer-content-from-url)
+  - [From url](#Download-weTransfer-content-from-url)
+  - [From url by file ID](#Download-weTransfer-file-by-ID)
+  - [Pipe](#Download-weTransfer-content-from-url-pipe-response)
+- [Get infos](#isValidWetransfertUrl)
+  - [Validate url](#isValidWetransfertUrl)
+  - [Get url detail](#Get-information-about-weTransfert-url)
+- [Upload](#Upload)
+  - [Using payload wrapper](#Payload-Exemple)
+  - [Progress object](#Progress-object)
+  - [End object](#End-object)
+  - [Get share link](#Upload-without-email)
+- [Known Bugs](#Known-Bugs)
+
 # Install
 ```
 npm install wetransfert --save
@@ -33,6 +52,10 @@ Tested in node 12.x
 ``` javascript
 const { upload, download, getInfo, isValidWetransfertUrl } = require('wetransfert');
 ```  
+
+# Use custom proxy
+- Add HTTP_PROXY or HTTPS_PROXY environement variable
+
 # Download weTransfer content from url
 ### download(url, folder)
 The function take a valid wetransfer url and a destination folder
@@ -58,6 +81,7 @@ download(myUrl, myDestinationFolder)
   });
 ```
 
+
 # Download weTransfer file by ID
 ### download(url, folder, fileIds)
 - fileIds: An array of wetransfer file id
@@ -80,7 +104,8 @@ download(myUrl, myDestinationFolder, ['aaaaaaaaa'])
 
 > /!\ If your transfer contain only one file, wetransfer does not zip the content. Be carefull when using the downloadPipe function. You can obtain all files information using the getInfo function. 
 
-# Download weTransfer content from url + pipe response (progress with callback)
+# Download weTransfer content from url pipe response 
+- (progress with callback)
 ### downloadPipe(url)
 
 This function take a valid wetransfer url. Like the classique download function, you can specify the file ids you want to download. downloadPipe(response.shortened_url, ["fileID"])
@@ -101,6 +126,16 @@ downloadPipe(response.shortened_url, null)
 ```
 
 > /!\ If your transfer contain only one file, wetransfer does not zip the content. Be carefull when using the downloadPipe function. You can obtain all files information using the getInfo function. 
+
+
+
+
+# isValidWetransfertUrl
+
+Return a NodeJS URL object if the url is valid.
+
+If not, it return false
+
 
 
 # Get information about weTransfert url
@@ -166,13 +201,6 @@ getInfo('myWeTransfertURL')
 }
 ```
 
-# isValidWetransfertUrl
-
-Return a NodeJS URL object if the url is valid.
-
-If not, it return false
-
-
 
 # Upload
 You can upload a total file size >= 2Gibibyte (2147483648 Byte)
@@ -183,8 +211,7 @@ upload('mailSender', ['receiverMail'], ['file1'], 'myMessage', 'ui_language', us
 
 The upload function parameters :
 - mailSender: A valid mail address of the sender
-- receiverMail: An array of valid destination address
-- file1: An array of valid file path you wan to transfer
+- receiverMail: An array of valid destination addreEnd objectansfer
 - myMessage: The message you want to send
 - ui_language: The language of the wetransfer receiver. ex: en, fr
 - username: Your wetransfer account username. /!\ username and mailSender email must be the same
