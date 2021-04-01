@@ -4,6 +4,8 @@
  [![Known Vulnerabilities](https://snyk.io/test/github/orgrimarr/node-wetransfert/badge.svg)](https://snyk.io/test/github/orgrimarr/node-wetransfert) 
 
 # Changelog
+- 2.3.1
+  - Fix download/upload due to wetranfer changes
 - 2.3.0
   - Add proxy support
 - 2.2.0
