@@ -14,10 +14,6 @@ const weTransfertRegex         = /(https:\/\/wetransfer\.com\/downloads\/[0-9a-z
 const weTransfertRegexShort    = /(https:\/\/we\.tl\/.{5,})/i
 const weTransfertRegexMedium   = /(https:\/\/wetransfer\.com\/downloads\/[0-9a-zA-Z]{10,}\/[0-9a-zA-Z]{4,})/i
 
-const _preloaded_transfer_Regex = /\_preloaded\_transfer\_/g
-const removeVarDeclarationRegex = /var[\s]*\_preloaded\_transfer\_[\s]*=/g
-const removeLastSemicolon = /(}\;\n)$/g
-
 const getHttpAgent = function(){
     const proxy = process.env.http_proxy || process.env.HTTP_PROXY || process.env.https_proxy || process.env.HTTPS_PROXY
     if(proxy){
@@ -27,24 +23,6 @@ const getHttpAgent = function(){
 }
 exports.getHttpAgent = getHttpAgent
 
-const extractVar = async function (text) {
-    const json = text.replace(removeVarDeclarationRegex, '').replace(removeLastSemicolon, '}')
-    return JSON.parse(json)
-}
-
-const extractScriptContent = function (body) { // Return a list of var
-    return new Promise((resolve, reject) => {
-        const $ = cheerio.load(body)
-        $('script').each(function () {
-            const content = $(this).html()
-            console.log(content);
-            if (_preloaded_transfer_Regex.exec(content)) {
-                return resolve(content)
-            }
-        })
-        return reject(new Error('No _preloaded_transfer_ var found !'))
-    })
-}
 
 const expandUrl = async function(shortUrl) {
     const result = await fetch(shortUrl, {

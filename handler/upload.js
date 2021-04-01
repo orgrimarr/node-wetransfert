@@ -205,11 +205,15 @@ class Upload extends EventEmitter {
             signal: this.controller.signal,
             headers: {
                 'cookie': this.sessionCookie,
-                'Orign': 'https://wetransfer.com',
                 'Content-Type': 'application/json',
-                'Refer': 'https://wetransfer.com/',
+                'authority': 'wetransfer.com',
+                'accept': 'application/json, text/plain, */*',
+                'accept-language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
+                'referer': 'https://wetransfer.com/',
+                'sec-fetch-mode': 'cors',
+                'sec-fetch-dest': 'empty',
+                'x-requested-with': 'XMLHttpRequest',
                 'x-csrf-token': this.csrfToken,
-                'Accept-Language': 'fr-FR,fr;q=0.8,en-US;q=0.6,en;q=0.4',
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36'
             },
             agent: utils.getHttpAgent()

@@ -1,7 +1,7 @@
 const fetch     = require('node-fetch')
 const debug     = require('debug')("wetransfert:getinfos")
 
-const { isValidWetransfertUrl, formatDownloadApiUri, waitAsync, getContentInfo, getHttpAgent, getContentSecurity } = require('../utils/utils')
+const { isValidWetransfertUrl, formatDownloadApiUri, waitAsync, getHttpAgent, getContentSecurity } = require('../utils/utils')
 
 
 const getDownloadUri = async function (urlObj, sessionCookie, csrf, fileIds) {
@@ -24,7 +24,6 @@ const getDownloadUri = async function (urlObj, sessionCookie, csrf, fileIds) {
             'referer': 'https://wetransfer.com/',
             'sec-fetch-mode': 'cors',
             'sec-fetch-dest': 'empty',
-            'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36',
             'x-requested-with': 'XMLHttpRequest',
             'x-csrf-token': csrf,
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36'
@@ -50,7 +49,7 @@ const formatResult = function (array) {
 }
 const getContentInfos = async function(urlObj, sessionCookie, csrf) {
     const requestParams = await formatDownloadApiUri(urlObj)
-    let prepareDownloadUri = requestParams.uri.replace("download", "prepare-download");
+    const prepareDownloadUri = requestParams.uri.replace("download", "prepare-download");
 
     const result = await fetch(prepareDownloadUri, {
         method: 'POST',
@@ -64,7 +63,6 @@ const getContentInfos = async function(urlObj, sessionCookie, csrf) {
             'referer': 'https://wetransfer.com/',
             'sec-fetch-mode': 'cors',
             'sec-fetch-dest': 'empty',
-            'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36',
             'x-requested-with': 'XMLHttpRequest',
             'x-csrf-token': csrf,
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36'
