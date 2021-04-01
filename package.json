@@ -16,7 +16,8 @@
   "repository": "https://github.com/orgrimarr/node-wetransfert.git",
   "author": "orgrimarr",
   "contributors": [
-    "agusti"
+    "agusti",
+    "cylwin"
   ],
   "license": "none",
   "scripts": {
