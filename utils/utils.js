@@ -37,6 +37,7 @@ const extractScriptContent = function (body) { // Return a list of var
         const $ = cheerio.load(body)
         $('script').each(function () {
             const content = $(this).html()
+            console.log(content);
             if (_preloaded_transfer_Regex.exec(content)) {
                 return resolve(content)
             }
@@ -176,14 +177,12 @@ const getWetransferPageContent = async function(endpoint = wetransferEndpoint, c
 }
 exports.getWetransferPageContent = getWetransferPageContent
 
-exports.getContentInfo = async function (urlObj) {
+exports.getContentSecurity = async function (urlObj) {
     debug(`getContentInfo: GET ${urlObj.href}`)
-    const {htmlPage, sessionCookie, csrf} = await getWetransferPageContent(urlObj.href)
+    const {sessionCookie, csrf} = await getWetransferPageContent(urlObj.href)
+    debug(`getContentInfo: sessionCookie, csrf`, sessionCookie, csrf)
  
-    const scripts = await extractScriptContent(htmlPage)
-    const vars    = await extractVar(scripts)
     return {
-        ...vars,
         sessionCookie,
         csrf
     }
