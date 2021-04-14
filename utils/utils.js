@@ -182,6 +182,13 @@ exports.login = async function(user, password){
         headers: {
             'cookie': loginSessionInfos.sessionCookie,
             'Content-Type': 'application/json',
+            'authority': 'wetransfer.com',
+            'accept': 'application/json, text/plain, */*',
+            'accept-language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
+            'referer': 'https://wetransfer.com/',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-dest': 'empty',
+            'x-requested-with': 'XMLHttpRequest',
             'x-csrf-token': loginSessionInfos.csrf,
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36'
         },
