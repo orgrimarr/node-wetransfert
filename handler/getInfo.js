@@ -51,9 +51,12 @@ const getContentInfos = async function(urlObj, sessionCookie, csrf) {
     const requestParams = await formatDownloadApiUri(urlObj)
     const prepareDownloadUri = requestParams.uri.replace("download", "prepare-download");
 
+    debug('getContentInfos prepareDownloadUri', prepareDownloadUri)
+    const body = requestParams.body
+    debug('getContentInfos body', body)
     const result = await fetch(prepareDownloadUri, {
         method: 'POST',
-        body: JSON.stringify({security_hash: requestParams.body.security_hash}),
+        body: JSON.stringify(body),
         headers: {
             'cookie': sessionCookie,
             'Content-Type': 'application/json',

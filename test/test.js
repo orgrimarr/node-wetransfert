@@ -28,7 +28,7 @@ const testSamples = [
 
 /////// DOWNLOAD SECTION ////////
 // Download URI : ex: https://wetransfer.com/downloads/5ea8acc81f4da9f731da85c6cb162a1d20180404153650/9bf4079e384a573d2e12fb4a84e655d520180404153650/0b8279
-const downloadURL = 'https://we.tl/t-BUr6nd2DAP'
+const downloadURL = 'https://wetransfer.com/downloads/068f46823c14ad9c3b5ef39d0f01f90120210504211103/7924157e91f9eff675d18ac63fcc23b820210504211117/ecbda7'
 // Your download folder, ex : /home/orgrimarr/wetransfer
 const downloadFolder = path.resolve(__dirname, './tmp')
 
@@ -118,7 +118,7 @@ const testUploadLink = function(){
 // testUploadLink()
 // testUpload().then(console.log).catch(console.error)
 
-getInfo("https://we.tl/t-BUr6nd2DAP")
+getInfo("https://wetransfer.com/downloads/068f46823c14ad9c3b5ef39d0f01f90120210504211103/7924157e91f9eff675d18ac63fcc23b820210504211117/ecbda7")
 .then(response =>  {
     console.log(JSON.stringify(response, null, 2))
 })

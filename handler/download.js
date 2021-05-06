@@ -22,6 +22,10 @@ exports.download = function (url = '', destPath = null, fileIds = null) {
             if (!weTransfertObject) {
                 return reject(new Error('Not a valid url'))
             }
+            if (!weTransfertObject.downloadURI) {
+                const errorMessage = weTransfertObject.content ? weTransfertObject.content.message : ""
+                return reject(new Error(`No downloadURI found. ${errorMessage}`))
+            }
 
             if (!fs.existsSync(destPath)) {
                 await mkdirp(destPath)

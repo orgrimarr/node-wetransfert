@@ -52,12 +52,14 @@ exports.formatDownloadApiUri = async function(urlObj, fileId){
 
     // Short link 
     if(weTransfertRegexShort.exec(urlObj.href) !== null){
-        debug("formatDownloadApiUri: short_url")
+        debug("formatDownloadApiUri: short_url", urlObj.pathname.split('/'))
         const resp = await expandUrl(urlObj.href)
         const newURL = new urlUtils.URL(resp)
 
         if(newURL){
             const [, , urlID, hash] = newURL.pathname.split('/')
+            debug('hash', hash)
+            debug('urlID', urlID)
             const downloadParms = {
                 uri: `https://wetransfer.com/api/${apiVersion}/transfers/${urlID}/download`,
                 body: {
@@ -76,8 +78,11 @@ exports.formatDownloadApiUri = async function(urlObj, fileId){
 
     // Nomal url
     if(weTransfertRegex.exec(urlObj.href) !== null){
-        debug("formatDownloadApiUri: normal_url")
+        debug("formatDownloadApiUri: normal_url", urlObj.pathname.split('/'))
         const [, , urlID, recipient_id, hash] = urlObj.pathname.split('/')
+        debug('recipient_id', recipient_id)
+        debug('hash', hash)
+        debug('urlID', urlID)
         const downloadParms = {
             uri: `https://wetransfer.com/api/${apiVersion}/transfers/${urlID}/download`,
             body: {
@@ -96,8 +101,10 @@ exports.formatDownloadApiUri = async function(urlObj, fileId){
 
     // Medium  url
     if(weTransfertRegexMedium.exec(urlObj.href) !== null){
-        debug("formatDownloadApiUri: medium_url")
+        debug("formatDownloadApiUri: medium_url", urlObj.pathname.split('/'))
         const [, , urlID, hash] = urlObj.pathname.split('/')
+        debug('hash', hash)
+        debug('urlID', urlID)
         const downloadParms = {
             uri: `https://wetransfer.com/api/${apiVersion}/transfers/${urlID}/download`,
             body: {
