@@ -2,3 +2,5 @@ node_modules
 dest
 tmp
 .vscode
+test/ressources/big/*
+!test/ressources/big/.gitkeep
