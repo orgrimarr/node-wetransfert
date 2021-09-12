@@ -1,9 +1,13 @@
 # [node-wetransfert](https://github.com/orgrimarr/node-wetransfert)
+
 ## Download/Upload [wetransfer](https://wetransfer.com/) content with nodeJS ! - Unofficial API for wetransfer
 
- [![Known Vulnerabilities](https://snyk.io/test/github/orgrimarr/node-wetransfert/badge.svg)](https://snyk.io/test/github/orgrimarr/node-wetransfert) 
+[![Known Vulnerabilities](https://snyk.io/test/github/orgrimarr/node-wetransfert/badge.svg)](https://snyk.io/test/github/orgrimarr/node-wetransfert)
 
 # Changelog
+
+- 2.3.4
+  - Fix uploadFileStream is not defined for big files #27
 - 2.3.3
   - Fix download for Nomal url (Fix get recipient id)
 - 2.3.2
