@@ -1,6 +1,6 @@
 {
   "name": "wetransfert",
-  "version": "2.3.4",
+  "version": "2.3.5",
   "description": "Download/Upload wetransfer content with nodeJS - Unofficial API for wetransfer",
   "keywords": [
     "file transfer",

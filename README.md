@@ -4,10 +4,17 @@
 
 [![Known Vulnerabilities](https://snyk.io/test/github/orgrimarr/node-wetransfert/badge.svg)](https://snyk.io/test/github/orgrimarr/node-wetransfert)
 
-# Changelog
+## Changelog
 
+- 2.3.5
+  - Upgrade libs versions
+  - Fix dep security issue #28
 - 2.3.4
   - Fix uploadFileStream is not defined for big files #27
+  - Fix dep security issue #26
+  - Fix dep security issue #25
+  - Fix dep security issue #24
+  - Fix dep security issue #23
 - 2.3.3
   - Fix download for Nomal url (Fix get recipient id)
 - 2.3.2
@@ -27,11 +34,12 @@
   - Upload (send email) still broken. Wetransfer add a captcha. I will implement download via wetransfer account (user/password) soon
 - 2.1.4
   - Fix upload !
-- 2.1.3 
+- 2.1.3
   - Fix dependencies security issues
   - Fix download (Thanks @cylwin). The upload part is still broken
 
-# Table of content
+## Table of content
+
 - [Install](#Install)
 - [Use custom proxy](#Use-custom-proxy)
 - [Download](#Download-weTransfer-content-from-url)
@@ -42,39 +50,43 @@
   - [Validate url](#isValidWetransfertUrl)
   - [Get url detail](#Get-information-about-weTransfert-url)
 - [Upload](#Upload)
-  - [Using payload wrapper](#Payload-Exemple)
+  - [Using payload wrapper](#Payload-Example)
   - [Progress object](#Progress-object)
   - [End object](#End-object)
   - [Get share link](#Upload-without-email)
 - [Known Bugs](#Known-Bugs)
 
-# Install
-```
+## Install
+
+``` shell
 npm install wetransfert --save
 or
 yarn add wetransfert
 ```
+
 Tested in node 12.x
 
-
-## You can require the module like this
+### You can require the module like this
 
 ``` javascript
 const { upload, download, getInfo, isValidWetransfertUrl } = require('wetransfert');
 ```  
 
-# Use custom proxy
+## Use custom proxy
+
 - Add HTTP_PROXY or HTTPS_PROXY environement variable
 
-# Download weTransfer content from url
+## Download weTransfer content from url
+
 ### download(url, folder)
+
 The function take a valid wetransfer url and a destination folder
 
 Simply return a [PromiseProgress](https://github.com/sindresorhus/p-progress)
 
-The response is an object describing the [weTransfert content](#response-exemple)
+The response is an object describing the [weTransfert content](#response-example)
 
-## Exemple
+### Example
 
 ``` javascript
 const { download } = require('wetransfert');
@@ -91,12 +103,14 @@ download(myUrl, myDestinationFolder)
   });
 ```
 
+## Download weTransfer file by ID
 
-# Download weTransfer file by ID
 ### download(url, folder, fileIds)
+
 - fileIds: An array of wetransfer file id
 
-## Exemple
+### Example
+
 ``` javascript
 const { download } = require('wetransfert');
 
@@ -112,19 +126,22 @@ download(myUrl, myDestinationFolder, ['aaaaaaaaa'])
   });
 ```
 
-> /!\ If your transfer contain only one file, wetransfer does not zip the content. Be carefull when using the downloadPipe function. You can obtain all files information using the getInfo function. 
+> /!\ If your transfer contain only one file, wetransfer does not zip the content. Be carefull when using the downloadPipe function. You can obtain all files information using the getInfo function.
 
-# Download weTransfer content from url pipe response 
+## Download weTransfer content from url pipe response
+
 - (progress with callback)
+
 ### downloadPipe(url)
 
 This function take a valid wetransfer url. Like the classique download function, you can specify the file ids you want to download. downloadPipe(response.shortened_url, ["fileID"])
 
-It return a Promise and resolve a ReadableStream you can pipe. 
+It return a Promise and resolve a ReadableStream you can pipe.
 
 If you need a progress, you can obtain the total size with the getInfo function
 
-## Exemple 
+### Example
+
 ``` javascript
 const { downloadPipe } = require('wetransfert');
 
@@ -135,22 +152,17 @@ downloadPipe(response.shortened_url, null)
   .catch(console.error)
 ```
 
-> /!\ If your transfer contain only one file, wetransfer does not zip the content. Be carefull when using the downloadPipe function. You can obtain all files information using the getInfo function. 
+> /!\ If your transfer contain only one file, wetransfer does not zip the content. Be carefull when using the downloadPipe function. You can obtain all files information using the getInfo function.
 
-
-
-
-# isValidWetransfertUrl
+## isValidWetransfertUrl
 
 Return a NodeJS URL object if the url is valid.
 
 If not, it return false
 
+## Get information about weTransfert url
 
-
-# Get information about weTransfert url
-
-## Exemple
+### Example
 
 ``` javascript
 const { getInfo } = require('wetransfert');
@@ -165,7 +177,7 @@ getInfo('myWeTransfertURL')
 
 ```
 
-## Response Exemple
+## Response Example
 
 ``` json
 {
@@ -211,15 +223,16 @@ getInfo('myWeTransfertURL')
 }
 ```
 
+## Upload
 
-# Upload
 You can upload a total file size >= 2Gibibyte (2147483648 Byte)
 
 upload('mailSender', ['receiverMail'], ['file1'], 'myMessage', 'ui_language', username, password)
 
-**/!\ Wetransfer upload (send email) is no longer possible without a wetransfer account. Wetransfer add a captcha so i can't script the upload. You can specify yout wetransfer username/password to the upload function**
+**/!\ Wetransfer upload (send email) is no longer possible without a wetransfer account.** Wetransfer add a captcha so i can't script the upload. You can specify yout wetransfer username/password to the upload function
 
 The upload function parameters :
+
 - mailSender: A valid mail address of the sender
 - receiverMail: An array of valid destination addreEnd objectansfer
 - myMessage: The message you want to send
@@ -228,11 +241,13 @@ The upload function parameters :
 - password: Your wetransfer account password
 
 The upload function expose an event emitter and will trigger 3 event :
+
 - progress: Represent the state of the upload
 - end: It wil be triggered when the upload end with success.
 - error: Il will be triggered on error, the transfer is canceled after an error
 
-## Exemple
+### Example
+
 ``` javascript
     const myUpload = upload('mailSender@gmail.com', ['receive1@gmail.com', 'receive2@gmail.com'], ['D:/Video/MEDIA150212142309947screen.mp4', 'C:/Users/pc/Desktop/toto2.txt', 'C:/Users/pc/Desktop/tata.txt'], 'Hello World', 'en', 'username', 'password')
     .on('progress', (progress) => console.log('PROGRESS', progress))
@@ -244,7 +259,8 @@ The upload function expose an event emitter and will trigger 3 event :
     }, 10000);
 ```
 
-## Payload Exemple
+## Payload Example
+
 ``` javascript
     const toUpload = [
         path.resolve(__dirname, './ressources/flower-3876195_960_720.jpg'),   // Upload a file from path
@@ -272,6 +288,7 @@ The upload function expose an event emitter and will trigger 3 event :
 ```
 
 ## Upload using node-wetransfer Payload Wrapper
+
 ``` javascript
     const Payload = require('wetransfert').Payload
 
@@ -306,6 +323,7 @@ The upload function expose an event emitter and will trigger 3 event :
 > /!\ If you want tu upload from a Stream you must provide le steam length. It is mandatory from wetransfer
 
 ## Progress object
+
 ``` json
 {
   "percent": 0.5,                
@@ -320,6 +338,7 @@ The upload function expose an event emitter and will trigger 3 event :
   }        
 }
 ```
+
 - percent: Overall percentage (between 0 to 1)
 - speed: The upload speed in bytes/sec
 - total: The total payload size in bytes
@@ -328,6 +347,7 @@ The upload function expose an event emitter and will trigger 3 event :
 - remaining: The remaining seconds to finish (3 decimals)
 
 ## End object
+
 ``` json
 {
     "id": "f657a4d4dfda8285b871c268621e70ac20190105125429",
@@ -363,24 +383,21 @@ Remember do not forget get URL in "end" object.
 
 With this mode you dont need a wetransfer account
 
+[End Object](#response-example)
 
-[End Object](#response-exemple)
-
-
-# To do
+## To do
 
 - improve error handling
 - provide pip option for download/upload function
--
 
+## Known Bugs
 
-# Known Bugs
--
-
+- none at this time
 
 Don't hesitate to give your feedback on github and let me know of any bug you might encounter
 
 if you have any issue please use the debug mode before open an issue
+
 ``` javascript
 // Juste add the begining of your script
 process.env.DEBUG = "wetransfert*"
