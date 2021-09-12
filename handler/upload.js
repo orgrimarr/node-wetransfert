@@ -5,6 +5,7 @@ const utils = require('../utils/utils')
 const { default: fetch } = require('node-fetch')
 const AbortController = require("abort-controller")
 const FormData = require('form-data')
+const { Stream } = require('stream')
 
 class Upload extends EventEmitter {
     constructor(mailFrom = '', mailRecipients = '', payloads = [], message = '', ui_language = 'en', user = null, password = "") {
@@ -44,7 +45,7 @@ class Upload extends EventEmitter {
         this.sessionCookie = ""
         this.user = user
         this.password = password
-        
+
         this.loginInfos = null
 
         this.on('cancel', (e) => {
@@ -158,7 +159,7 @@ class Upload extends EventEmitter {
         this.totalProgress.size.total = this.totalSizeToUpload
 
         // start workflow
-        if(this.user && this.password){
+        if (this.user && this.password) {
             const loginInfos = await utils.login(this.user, this.password)
             this.loginInfos = loginInfos.data
             this.csrfToken = loginInfos.csrf
@@ -272,9 +273,9 @@ class Upload extends EventEmitter {
             body.from = this.mailFrom
             url = `https://wetransfer.com/api/${this.apiVersion}/transfers/email`
         }
-        if(this.loginInfos && Array.isArray(this.loginInfos.memberships) && this.loginInfos.memberships.length > 0){
+        if (this.loginInfos && Array.isArray(this.loginInfos.memberships) && this.loginInfos.memberships.length > 0) {
             const membership = this.loginInfos.memberships[0]
-            if(membership && typeof membership === "object" && typeof membership.account === "object" && membership.account.id){
+            if (membership && typeof membership === "object" && typeof membership.account === "object" && membership.account.id) {
                 body.account_id = membership.account.id
             }
         }
@@ -282,13 +283,13 @@ class Upload extends EventEmitter {
 
         debug("emailRequest")
         const result = await this.apiRequest('POST', url, body)
-        if(result.message === "email_verification_required"){
+        if (result.message === "email_verification_required") {
             throw new Error(`Error. You must be loged in. Wetransfer now use captcha in free mode. Please provide a user/password to the upload function`)
         }
-        if(!result.id || !Array.isArray(result.files)){
+        if (!result.id || !Array.isArray(result.files)) {
             throw new Error(`Error. Invalid email response from wetransfer. ${JSON.stringify(result)}`)
         }
-        
+
         return result
     }
     async finalize() {
@@ -362,7 +363,7 @@ class Upload extends EventEmitter {
                 }
 
                 //const neededChunk = fileObj.size > fileObj.chunk_size ? Math.floor(fileObj.size / fileObj.chunk_size) + 1 : 1
-                fileObj.stream
+                uploadFileStream = fileObj.stream
                     .on('data', async (chunk) => {
                         try {
                             receivedBuffers.push(chunk)
@@ -390,10 +391,11 @@ class Upload extends EventEmitter {
                             }
                             return 'ok'
                         } catch (e) {
-                            uploadFileStream.destroy()
-
-                            debug(`uploadFileWf data error: ${e.message}`)
-                            return reject(e.message)
+                            debug(`uploadFileWf data error: ${e.stack}`)
+                            reject(e)
+                            if (uploadFileStream instanceof Stream) {
+                                uploadFileStream.destroy()
+                            }
                         }
                     })
                     .on('end', async () => {

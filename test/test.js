@@ -1,5 +1,5 @@
 process.env.DEBUG = "wetransfert*"
-const { getInfo, isValidWetransfertUrl, download, downloadPipe ,upload, waitForDownloadable, Payload } = require('../index')
+const { getInfo, isValidWetransfertUrl, download, downloadPipe, upload, waitForDownloadable, Payload } = require('../index')
 const fs = require('fs')
 const path = require('path')
 
@@ -26,6 +26,13 @@ const testSamples = [
     }
 ]
 
+const bigSamples = [
+    new Payload({
+        filePath: path.resolve(__dirname, './ressources/big/videoSample.mkv'),
+        name: "big sample" // Overide file name
+    }),
+]
+
 /////// DOWNLOAD SECTION ////////
 // Download URI : ex: https://wetransfer.com/downloads/5ea8acc81f4da9f731da85c6cb162a1d20180404153650/9bf4079e384a573d2e12fb4a84e655d520180404153650/0b8279
 const downloadURL = 'https://wetransfer.com/downloads/068f46823c14ad9c3b5ef39d0f01f90120210504211103/7924157e91f9eff675d18ac63fcc23b820210504211117/ecbda7'
@@ -50,7 +57,7 @@ const username = ""
 const password = ""
 
 /////// TEST SECTION //////////
-const testDownload = function(fileIds = null){
+const testDownload = function (fileIds = null) {
     download(downloadURL, downloadFolder, fileIds)
         .onProgress(progress => {
             console.log('progress', progress)
@@ -63,18 +70,18 @@ const testDownload = function(fileIds = null){
         })
 }
 
-const testDownloadPipe = async function(){
+const testDownloadPipe = async function () {
     const destName = `download_${Math.floor(Math.random() * 1000)}.zip`
-    const downloadStream = await downloadPipe(downloadURL, null, (percent) => { 
-        console.log('testDownloadPipe callback', percent) 
+    const downloadStream = await downloadPipe(downloadURL, null, (percent) => {
+        console.log('testDownloadPipe callback', percent)
     })
     downloadStream.pipe(fs.createWriteStream(path.resolve(downloadFolder, destName)))
 }
 
-const testUpload = function(sender = emailSender, receiver = reveiverSender, toUpload = filesToUpload, content = body, lang = language){
+const testUpload = function (sender = emailSender, receiver = reveiverSender, toUpload = filesToUpload, content = body, lang = language) {
     return new Promise((resolve, reject) => {
         const myUpload = upload(sender, receiver, toUpload, content, lang, username, password)
-        
+
         myUpload.on('progress', (progress) => console.log('PROGRESS', progress))
         myUpload.on('error', (error) => {
             return reject(error)
@@ -82,33 +89,49 @@ const testUpload = function(sender = emailSender, receiver = reveiverSender, toU
         myUpload.on('end', (end) => {
             return resolve(end)
         })
-    
-        if(cancel > 0){
+
+        if (cancel > 0) {
             console.log("cance upload !")
-            setTimeout(function(){
+            setTimeout(function () {
                 myUpload.cancel()
             }, cancel)
         }
     })
 }
 
-const testUploadLink = function(){
+const testUploadLink = function () {
     const myUpload = upload('', '', filesToUpload, body, language)
-    .on('progress', (progress) => console.log('PROGRESS', progress))
-    .on('end', (end) => console.log('END', end))
-    .on('error', (error) => {
-        if(error) console.error('ERROR', error.message)
-        console.log("error", error)
-    })
+        .on('progress', (progress) => console.log('PROGRESS', progress))
+        .on('end', (end) => console.log('END', end))
+        .on('error', (error) => {
+            if (error) console.error('ERROR', error.message)
+            console.log("error", error)
+        })
 
-    if(cancel > 0){
+    if (cancel > 0) {
         console.log("cance upload !")
-        setTimeout(function(){
+        setTimeout(function () {
             myUpload.cancel()
         }, cancel)
     }
 }
 
+const testUploadLinkBig = function () {
+    const myUpload = upload('', '', bigSamples, body, language)
+        .on('progress', (progress) => console.log('PROGRESS', progress))
+        .on('end', (end) => console.log('END', end))
+        .on('error', (error) => {
+            if (error) console.error('ERROR', error.message)
+            console.log("error", error)
+        })
+
+    if (cancel > 0) {
+        console.log("cance upload !")
+        setTimeout(function () {
+            myUpload.cancel()
+        }, cancel)
+    }
+}
 
 
 // Uncomment 
@@ -117,9 +140,10 @@ const testUploadLink = function(){
 // testDownloadPipe()
 // testUploadLink()
 // testUpload().then(console.log).catch(console.error)
+testUploadLinkBig()
 
-getInfo("https://wetransfer.com/downloads/068f46823c14ad9c3b5ef39d0f01f90120210504211103/7924157e91f9eff675d18ac63fcc23b820210504211117/ecbda7")
-.then(response =>  {
-    console.log(JSON.stringify(response, null, 2))
-})
-.catch(console.error)    
+// getInfo("https://wetransfer.com/downloads/068f46823c14ad9c3b5ef39d0f01f90120210504211103/7924157e91f9eff675d18ac63fcc23b820210504211117/ecbda7")
+//     .then(response => {
+//         console.log(JSON.stringify(response, null, 2))
+//     })
+//     .catch(console.error)
