@@ -1,22 +1,22 @@
-const urlUtils          = require('url')
-const fetch             = require('node-fetch')
-const debug             = require('debug')('wetransfert:utils')
-const cheerio           = require('cheerio')
-const HttpsProxyAgent   = require('https-proxy-agent')
-const https             = require('https')
+const urlUtils = require('url')
+const fetch = require('node-fetch')
+const debug = require('debug')('wetransfert:utils')
+const cheerio = require('cheerio')
+const HttpsProxyAgent = require('https-proxy-agent')
+const https = require('https')
 
 const wetransferEndpoint = "https://wetransfer.com/"
 const apiVersion = "v4"
 debug("wetransfer API version: " + apiVersion)
 exports.apiVersion = apiVersion
 
-const weTransfertRegex         = /(https:\/\/wetransfer\.com\/downloads\/[0-9a-zA-Z]{10,}\/[0-9a-zA-Z]{10,}\/[0-9a-zA-Z]{4,})/i
-const weTransfertRegexShort    = /(https:\/\/we\.tl\/.{5,})/i
-const weTransfertRegexMedium   = /(https:\/\/wetransfer\.com\/downloads\/[0-9a-zA-Z]{10,}\/[0-9a-zA-Z]{4,})/i
+const weTransfertRegex = /(https:\/\/wetransfer\.com\/downloads\/[0-9a-zA-Z]{10,}\/[0-9a-zA-Z]{10,}\/[0-9a-zA-Z]{4,})/i
+const weTransfertRegexShort = /(https:\/\/we\.tl\/.{5,})/i
+const weTransfertRegexMedium = /(https:\/\/wetransfer\.com\/downloads\/[0-9a-zA-Z]{10,}\/[0-9a-zA-Z]{4,})/i
 
-const getHttpAgent = function(){
+const getHttpAgent = function () {
     const proxy = process.env.http_proxy || process.env.HTTP_PROXY || process.env.https_proxy || process.env.HTTPS_PROXY
-    if(proxy){
+    if (proxy) {
         return new HttpsProxyAgent(proxy)
     }
     return https.globalAgent
@@ -24,7 +24,7 @@ const getHttpAgent = function(){
 exports.getHttpAgent = getHttpAgent
 
 
-const expandUrl = async function(shortUrl) {
+const expandUrl = async function (shortUrl) {
     const result = await fetch(shortUrl, {
         method: "HEAD",
         redirect: 'follow',
@@ -36,8 +36,11 @@ const expandUrl = async function(shortUrl) {
     return longUrl
 }
 
-exports.isValidWetransfertUrl = function(url){
-    if(weTransfertRegex.exec(url) !== null || weTransfertRegexShort.exec(url) !== null || weTransfertRegexMedium.exec(url) !== null){
+exports.isValidWetransfertUrl = function (url) {
+    if (typeof url !== "string") {
+        return false
+    }
+    if (weTransfertRegex.exec(url) !== null || weTransfertRegexShort.exec(url) !== null || weTransfertRegexMedium.exec(url) !== null) {
         debug(`isValidWetransfertUrl: true`)
         return new urlUtils.URL(url)
     }
@@ -45,18 +48,18 @@ exports.isValidWetransfertUrl = function(url){
     return false
 }
 
-exports.formatDownloadApiUri = async function(urlObj, fileId){
-    if(fileId && !Array.isArray(fileId)){
+exports.formatDownloadApiUri = async function (urlObj, fileId) {
+    if (fileId && !Array.isArray(fileId)) {
         fileId = [fileId]
     }
 
     // Short link 
-    if(weTransfertRegexShort.exec(urlObj.href) !== null){
+    if (weTransfertRegexShort.exec(urlObj.href) !== null) {
         debug("formatDownloadApiUri: short_url", urlObj.pathname.split('/'))
         const resp = await expandUrl(urlObj.href)
         const newURL = new urlUtils.URL(resp)
 
-        if(newURL){
+        if (newURL) {
             const [, , urlID, hash] = newURL.pathname.split('/')
             debug('hash', hash)
             debug('urlID', urlID)
@@ -67,7 +70,7 @@ exports.formatDownloadApiUri = async function(urlObj, fileId){
                     "intent": "entire_transfer"
                 }
             }
-            if(fileId){
+            if (fileId) {
                 downloadParms.body.intent = "single_file"
                 downloadParms.body.file_ids = fileId
             }
@@ -77,7 +80,7 @@ exports.formatDownloadApiUri = async function(urlObj, fileId){
     }
 
     // Nomal url
-    if(weTransfertRegex.exec(urlObj.href) !== null){
+    if (weTransfertRegex.exec(urlObj.href) !== null) {
         debug("formatDownloadApiUri: normal_url", urlObj.pathname.split('/'))
         const [, , urlID, recipient_id, hash] = urlObj.pathname.split('/')
         debug('recipient_id', recipient_id)
@@ -91,7 +94,7 @@ exports.formatDownloadApiUri = async function(urlObj, fileId){
                 "intent": "entire_transfer"
             }
         }
-        if(fileId){
+        if (fileId) {
             downloadParms.body.intent = "single_file"
             downloadParms.body.file_ids = fileId
         }
@@ -100,7 +103,7 @@ exports.formatDownloadApiUri = async function(urlObj, fileId){
     }
 
     // Medium  url
-    if(weTransfertRegexMedium.exec(urlObj.href) !== null){
+    if (weTransfertRegexMedium.exec(urlObj.href) !== null) {
         debug("formatDownloadApiUri: medium_url", urlObj.pathname.split('/'))
         const [, , urlID, hash] = urlObj.pathname.split('/')
         debug('hash', hash)
@@ -112,7 +115,7 @@ exports.formatDownloadApiUri = async function(urlObj, fileId){
                 "intent": "entire_transfer"
             }
         }
-        if(fileId){
+        if (fileId) {
             downloadParms.body.intent = "single_file"
             downloadParms.body.file_ids = fileId
         }
@@ -121,7 +124,7 @@ exports.formatDownloadApiUri = async function(urlObj, fileId){
     }
 }
 
-exports.waitAsync = function(time, data){
+exports.waitAsync = function (time, data) {
     return new Promise((resolve, reject) => {
         setTimeout(() => {
             return resolve(data)
@@ -129,16 +132,16 @@ exports.waitAsync = function(time, data){
     })
 }
 
-const getWetransferPageContent = async function(endpoint = wetransferEndpoint, cookies){
+const getWetransferPageContent = async function (endpoint = wetransferEndpoint, cookies) {
     debug(`getWetransferPageContent: GET ${endpoint}`)
-    if(typeof endpoint === 'object'){
+    if (typeof endpoint === 'object') {
         endpoint = urlUtils.format(endpoint)
     }
 
     const options = {
         agent: getHttpAgent()
     }
-    if(cookies){
+    if (cookies) {
         options.headers = {
             'cookie': cookies,
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36'
@@ -164,16 +167,16 @@ exports.getWetransferPageContent = getWetransferPageContent
 
 exports.getContentSecurity = async function (urlObj) {
     debug(`getContentInfo: GET ${urlObj.href}`)
-    const {sessionCookie, csrf} = await getWetransferPageContent(urlObj.href)
+    const { sessionCookie, csrf } = await getWetransferPageContent(urlObj.href)
     debug(`getContentInfo: sessionCookie, csrf`, sessionCookie, csrf)
- 
+
     return {
         sessionCookie,
         csrf
     }
 }
 
-exports.login = async function(user, password){
+exports.login = async function (user, password) {
     debug(`Login ${user}`)
     const endpoint = `https://wetransfer.com/api/${apiVersion}/auth/session`
 

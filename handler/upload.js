@@ -351,13 +351,13 @@ class Upload extends EventEmitter {
                     const combinedBuffer = Buffer.concat(receivedBuffers, receivedBuffersLength)
                     receivedBuffers.length = 0 // reset the array while keeping the original reference
                     receivedBuffersLength = 0
-                    const remainder = new Buffer(combinedBuffer.length - fileObj.chunk_size)
+                    const remainder = Buffer.alloc(combinedBuffer.length - fileObj.chunk_size)
                     combinedBuffer.copy(remainder, 0, fileObj.chunk_size)
                     receivedBuffers.push(remainder)
                     receivedBuffersLength = remainder.length
 
                     // Return the perfectly sized part.
-                    const uploadBuffer = new Buffer(fileObj.chunk_size)
+                    const uploadBuffer = Buffer.alloc(fileObj.chunk_size)
                     combinedBuffer.copy(uploadBuffer, 0, 0, fileObj.chunk_size)
                     return uploadBuffer
                 }

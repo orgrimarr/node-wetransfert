@@ -140,7 +140,7 @@ const testUploadLinkBig = function () {
 // testDownloadPipe()
 // testUploadLink()
 // testUpload().then(console.log).catch(console.error)
-testUploadLinkBig()
+// testUploadLinkBig()
 
 // getInfo("https://wetransfer.com/downloads/068f46823c14ad9c3b5ef39d0f01f90120210504211103/7924157e91f9eff675d18ac63fcc23b820210504211117/ecbda7")
 //     .then(response => {

@@ -22,7 +22,8 @@
   "license": "none",
   "scripts": {
     "snyk": "./node_modules/.bin/snyk test && ./node_modules/.bin/snyk test > snyk_report.txt",
-    "test": "snyk test",
+    "test": "mocha --delay --timeout 300000",
+    "security": "snyk test",
     "snyk-protect": "snyk protect",
     "prepare": "npm run snyk-protect"
   },
@@ -37,6 +38,9 @@
     "snyk": "^1.521.0",
     "unzipper": "^0.9.15"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "mocha": "^9.1.1",
+    "rimraf": "^3.0.2"
+  },
   "snyk": true
 }
