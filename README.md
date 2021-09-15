@@ -4,6 +4,10 @@
 
 [![Known Vulnerabilities](https://snyk.io/test/github/orgrimarr/node-wetransfert/badge.svg)](https://snyk.io/test/github/orgrimarr/node-wetransfert)
 
+![CodeQL analysis](https://github.com/orgrimarr/node-wetransfert/actions/workflows/codeql-analysis.yml/badge.svg?branch=master)
+
+![Regression tests](https://github.com/orgrimarr/node-wetransfert/actions/workflows/regression.yml/badge.svg?branch=master)
+
 ## Changelog
 
 - 2.3.5
