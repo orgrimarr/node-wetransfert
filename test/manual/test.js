@@ -28,7 +28,7 @@ const testSamples = [
 
 const bigSamples = [
     new Payload({
-        filePath: path.resolve(__dirname, './ressources/big/videoSample.mkv'),
+        filePath: path.resolve(__dirname, './ressources/big/BigBuckBunny.mp4  '),
         name: "big sample" // Overide file name
     }),
 ]
