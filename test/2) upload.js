@@ -87,7 +87,7 @@ describe('2) Upload', function () {
                     upload('', '', testSamples()[0], body, language)
                         // .on('progress', (progress) => console.error('PROGRESS', progress))
                         .on('end', (end) => {
-                            waitForDownloadable()
+                            waitForDownloadable(end)
                                 .then(() => getInfo(end))
                                 .then(res => {
                                     if (!isValidWetransfertUrl(res.downloadURI)) {

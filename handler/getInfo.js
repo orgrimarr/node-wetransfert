@@ -98,7 +98,10 @@ const getInfo = async function (url, fileIds) {
 }
 
 
-const waitForDownloadable = async function (responseObj) {
+const waitForDownloadable = async function (responseObj = null) {
+    if(!responseObj){
+        throw new Error(`waitForDownloadable invalid parameter`)
+    }
     if (responseObj.state === "downloadable" || (typeof responseObj.content === "object" && responseObj.content.state === "downloadable")) {
         return responseObj.content || responseObj
     }

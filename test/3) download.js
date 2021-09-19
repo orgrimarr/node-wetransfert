@@ -101,6 +101,9 @@ const tests = async function () {
                     }
                 })
             })
+            it('Should download a specific file', function () {
+
+            })
         })
 
         describe('downloadPipe', function () {
