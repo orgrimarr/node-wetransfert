@@ -1,5 +1,5 @@
 process.env.DEBUG = "wetransfert*"
-const { getInfo, isValidWetransfertUrl, download, downloadPipe, upload, waitForDownloadable, Payload } = require('../index')
+const { getInfo, isValidWetransfertUrl, download, downloadPipe, upload, waitForDownloadable, Payload } = require('../../index')
 const fs = require('fs')
 const path = require('path')
 
