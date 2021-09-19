@@ -88,7 +88,7 @@ describe('2) Upload', function () {
                         .on('end', (end) => {
                             waitForDownloadable(end)
                                 .then(() => getInfo(end.shortened_url))
-                                .then(res => {
+                                .then(res => {  
                                     if (!res.downloadURI) {
                                         return reject(new Error(`Error uploading, the transfer has no downloadURI ${res.downloadURI}`))
                                     }
@@ -190,5 +190,5 @@ describe('2) Upload', function () {
 
     })
 
-    // run()
+    run()
 })
