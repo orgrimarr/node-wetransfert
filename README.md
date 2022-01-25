@@ -10,6 +10,8 @@
 
 ## Changelog
 
+- 2.3.6
+  - Fix dep security issue (node-fetch)
 - 2.3.5
   - Upgrade libs versions
   - Fix dep security issue #28
