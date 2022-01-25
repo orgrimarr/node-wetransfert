@@ -368,7 +368,6 @@ class Upload extends EventEmitter {
                         try {
                             receivedBuffers.push(chunk)
                             receivedBuffersLength += chunk.length
-                            var FormData = require('form-data');           // Chunk size test
                             if (receivedBuffersLength >= fileObj.chunk_size) {
                                 currentChunkOffset++
                                 uploadFileStream.pause()
