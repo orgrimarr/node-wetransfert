@@ -10,7 +10,7 @@
 
 ## Changelog
 
-- 2.3.7
+- 2.3.7 / 2.3.8
   - Allowing subdomain url (https://orgrimarr.wetransfer.com)
   - Fix dep security issue #30
   - Fix dep security issue #31

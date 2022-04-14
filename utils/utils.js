@@ -57,12 +57,20 @@ exports.isValidWetransfertUrl = function (url = '') {
 }
 
 exports.formatDownloadApiUri = async function (urlObj, fileId) {
+    if(!(urlObj instanceof URL)){
+        throw new Error('Error during formatDownloadApiUri. urlObj must be an instance of URL')
+    }
     if (fileId && !Array.isArray(fileId)) {
         fileId = [fileId]
     }
 
+    const wetransferUrl = new urlUtils.URL(urlObj.toString())
+    if(wetransferUrl.hostname !== wetransferDomain && wetransferUrl.hostname.endsWith(wetransferDomain)){  // subdomain url
+        wetransferUrl.hostname = wetransferDomain
+    }
+
     // Short link 
-    if (weTransfertRegexShort.exec(urlObj.href) !== null) {
+    if (weTransfertRegexShort.exec(wetransferUrl.href) !== null) {
         debug("formatDownloadApiUri: short_url", urlObj.pathname.split('/'))
         const resp = await expandUrl(urlObj.href)
         const newURL = new urlUtils.URL(resp)
@@ -88,7 +96,7 @@ exports.formatDownloadApiUri = async function (urlObj, fileId) {
     }
 
     // Nomal url
-    if (weTransfertRegex.exec(urlObj.href) !== null) {
+    if (weTransfertRegex.exec(wetransferUrl.href) !== null) {
         debug("formatDownloadApiUri: normal_url", urlObj.pathname.split('/'))
         const [, , urlID, recipient_id, hash] = urlObj.pathname.split('/')
         debug('recipient_id', recipient_id)
@@ -111,7 +119,7 @@ exports.formatDownloadApiUri = async function (urlObj, fileId) {
     }
 
     // Medium  url
-    if (weTransfertRegexMedium.exec(urlObj.href) !== null) {
+    if (weTransfertRegexMedium.exec(wetransferUrl.href) !== null) {
         debug("formatDownloadApiUri: medium_url", urlObj.pathname.split('/'))
         const [, , urlID, hash] = urlObj.pathname.split('/')
         debug('hash', hash)

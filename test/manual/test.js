@@ -4,11 +4,11 @@ const fs = require('fs')
 const path = require('path')
 
 const testSamples = [
-    path.resolve(__dirname, './ressources/flower-3876195_960_720.jpg'),
-    path.resolve(__dirname, './ressources/landscape-3779159_960_720.jpg'),
-    path.resolve(__dirname, './ressources/gnu.txt'),
+    path.resolve(__dirname, '../ressources/flower-3876195_960_720.jpg'),
+    path.resolve(__dirname, '../ressources/landscape-3779159_960_720.jpg'),
+    path.resolve(__dirname, '../ressources/gnu.txt'),
     new Payload({
-        filePath: path.resolve(__dirname, './ressources/gnu.txt'),
+        filePath: path.resolve(__dirname, '../ressources/gnu.txt'),
         name: "gnu_renamed.txt" // Overide file name
     }),
     new Payload({   // Upload a buffer
@@ -21,14 +21,14 @@ const testSamples = [
     },
     {
         name: "test stream from file",
-        stream: fs.createReadStream(path.resolve(__dirname, './ressources/water-lily-3784022_960_720.jpg')),
-        size: fs.statSync(path.resolve(__dirname, './ressources/water-lily-3784022_960_720.jpg')).size
+        stream: fs.createReadStream(path.resolve(__dirname, '../ressources/water-lily-3784022_960_720.jpg')),
+        size: fs.statSync(path.resolve(__dirname, '../ressources/water-lily-3784022_960_720.jpg')).size
     }
 ]
 
 const bigSamples = [
     new Payload({
-        filePath: path.resolve(__dirname, './ressources/big/BigBuckBunny.mp4  '),
+        filePath: path.resolve(__dirname, '../ressources/big/BigBuckBunny.mp4'),
         name: "big sample" // Overide file name
     }),
 ]
@@ -136,7 +136,7 @@ const testUploadLinkBig = function () {
 
 // Uncomment 
 
-// testDownload()
+testDownload()
 // testDownloadPipe()
 // testUploadLink()
 // testUpload().then(console.log).catch(console.error)
