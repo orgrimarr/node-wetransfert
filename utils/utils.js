@@ -10,6 +10,7 @@ const apiVersion = "v4"
 debug("wetransfer API version: " + apiVersion)
 exports.apiVersion = apiVersion
 
+const wetransferDomain = 'wetransfer.com'
 const weTransfertRegex = /(https:\/\/wetransfer\.com\/downloads\/[0-9a-zA-Z]{10,}\/[0-9a-zA-Z]{10,}\/[0-9a-zA-Z]{4,})/i
 const weTransfertRegexShort = /(https:\/\/we\.tl\/.{5,})/i
 const weTransfertRegexMedium = /(https:\/\/wetransfer\.com\/downloads\/[0-9a-zA-Z]{10,}\/[0-9a-zA-Z]{4,})/i
@@ -36,15 +37,22 @@ const expandUrl = async function (shortUrl) {
     return longUrl
 }
 
-exports.isValidWetransfertUrl = function (url) {
+exports.isValidWetransfertUrl = function (url = '') {
     if (typeof url !== "string") {
         return false
     }
-    if (weTransfertRegex.exec(url) !== null || weTransfertRegexShort.exec(url) !== null || weTransfertRegexMedium.exec(url) !== null) {
-        debug(`isValidWetransfertUrl: true`)
-        return new urlUtils.URL(url)
+    const wetransferUrl = new urlUtils.URL(url)
+    const originalUrl = url
+    if(wetransferUrl.hostname !== wetransferDomain && wetransferUrl.hostname.endsWith(wetransferDomain)){
+        // subdomain url
+        wetransferUrl.hostname = wetransferDomain
+        url = wetransferUrl.toString()
     }
-    debug(`isValidWetransfertUrl: false`)
+    if (weTransfertRegex.exec(url) !== null || weTransfertRegexShort.exec(url) !== null || weTransfertRegexMedium.exec(url) !== null) {
+        debug(`isValidWetransfertUrl ${originalUrl} true` )
+        return new urlUtils.URL(originalUrl)
+    }
+    debug(`isValidWetransfertUrl ${originalUrl} false`)
     return false
 }
 

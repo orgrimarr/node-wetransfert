@@ -17,6 +17,9 @@ describe('1) Common', function () {
         it('https://wetransfer.com/downloads/068f46823c14ad9c3b5ef39d0f01f90120210504211103/7924157e91f9eff675d18ac63fcc23b820210504211117/ecbda7 is a valid url', function () {
             assert.strictEqual(isValidWetransfertUrl('https://wetransfer.com/downloads/068f46823c14ad9c3b5ef39d0f01f90120210504211103/7924157e91f9eff675d18ac63fcc23b820210504211117/ecbda7') instanceof URL, true)
         })
+        it('Should accept subdomain wetransfer domain', function(){
+            assert.strictEqual(isValidWetransfertUrl('https://orgrimarr.wetransfer.com/downloads/068f46823c14ad9c3b5ef39d0f01f90120210504211103/7924157e91f9eff675d18ac63fcc23b820210504211117/ecbda7') instanceof URL, true)
+        })
     })
 
     describe('Payload', function () {

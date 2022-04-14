@@ -92,7 +92,7 @@ const getInfo = async function (url, fileIds) {
             debug("downloadURI", downloadURI)
             return formatResult([infos, downloadURI])
         }
-        throw new Error(`Unhanle url: ${URLObject.href}`)
+        throw new Error(`Unhanle url: ${url}`)
     }
     throw new Error('Unhanle url - url must be a string')
 }

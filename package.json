@@ -1,6 +1,6 @@
 {
   "name": "wetransfert",
-  "version": "2.3.6",
+  "version": "2.3.7",
   "description": "Download/Upload wetransfer content with nodeJS - Unofficial API for wetransfer",
   "keywords": [
     "file transfer",
@@ -21,7 +21,7 @@
   ],
   "license": "none",
   "scripts": {
-    "test": "mocha --delay --timeout 300000",
+    "test": "mocha --delay --timeout 300000 --exit --colors",
     "snyk-protect": "snyk-protect",
     "prepare": "npm run snyk-protect"
   },
