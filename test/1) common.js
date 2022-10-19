@@ -57,6 +57,10 @@ describe('1) Common', function () {
                 }
             })
         })
+        it('Should reject fake wetransfer domain', async function () {
+            assert.deepStrictEqual(await formatDownloadApiUri(new URL('https://orgrimarr_wetransfer.com/downloads/068f46823c14ad9c3b5ef39d0f01f90120210504211103/7924157e91f9eff675d18ac63fcc23b820210504211117/ecbda7'), 'fileId'), 
+            {})
+        })
     })
 
     describe('Payload', function () {
@@ -64,9 +68,9 @@ describe('1) Common', function () {
     })
 
     describe('getInfo', function () {
-        // it('Should be epired', async function () {
-        //     await assert.rejects(getInfo('https://we.tl/t-vJmAEKGL09'), { message: 'Error GET https://we.tl/t-vJmAEKGL09 server respond with status 404 Not Found' })
-        // })
+        it('Should be epired', async function () {
+            await assert.rejects(getInfo('https://we.tl/t-vJmAEKGL09'), { message: 'Error GET https://we.tl/t-vJmAEKGL09 server respond with status 404 Not Found' })
+        })
     })
 
     run()

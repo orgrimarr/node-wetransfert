@@ -43,7 +43,7 @@ exports.isValidWetransfertUrl = function (url = '') {
     }
     const wetransferUrl = new urlUtils.URL(url)
     const originalUrl = url
-    if(wetransferUrl.hostname !== wetransferDomain && wetransferUrl.hostname.endsWith(wetransferDomain)){
+    if(wetransferUrl.hostname !== wetransferDomain && wetransferUrl.hostname.endsWith(`.${wetransferDomain}`)){
         // subdomain url
         wetransferUrl.hostname = wetransferDomain
         url = wetransferUrl.toString()
@@ -65,7 +65,7 @@ exports.formatDownloadApiUri = async function (urlObj, fileId) {
     }
 
     const wetransferUrl = new urlUtils.URL(urlObj.toString())
-    if(wetransferUrl.hostname !== wetransferDomain && wetransferUrl.hostname.endsWith(wetransferDomain)){  // subdomain url
+    if(wetransferUrl.hostname !== wetransferDomain && wetransferUrl.hostname.endsWith(`.${wetransferDomain}`)){  // subdomain url
         wetransferUrl.hostname = wetransferDomain
     }
 
@@ -138,6 +138,8 @@ exports.formatDownloadApiUri = async function (urlObj, fileId) {
 
         return downloadParms
     }
+
+    return {}
 }
 
 exports.waitAsync = function (time, data) {
