@@ -12,7 +12,7 @@ on:
     - cron: '26 10 * * *'
 
 jobs:
-  build:
+  regression:
 
     runs-on: ubuntu-latest
 
