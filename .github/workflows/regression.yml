@@ -5,9 +5,9 @@ name: Regression tests
 
 on:
   push:
-    branches: [ master ]
+    branches: [ dev, main ]
   pull_request:
-    branches: [ master ]
+    branches: [ dev, main ]
   schedule:
     - cron: '26 10 * * *'
 
