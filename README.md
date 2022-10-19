@@ -10,6 +10,8 @@
 
 ## Changelog
 
+- 2.3.9
+  - Fix minor security issue that allows fake wetransfer domains #33
 - 2.3.7 / 2.3.8
   - Allowing subdomain url (https://orgrimarr.wetransfer.com)
   - Fix dep security issue #30
