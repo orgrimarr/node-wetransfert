@@ -6,6 +6,10 @@ on:
     - main
 
 jobs:
+  analyze:
+    uses: ./.github/workflows/codeql-analysis.yml
+  regression:
+    uses: ./.github/workflows/regression.yml
   release:
     runs-on: ubuntu-latest
     needs: [analyze, regression]
