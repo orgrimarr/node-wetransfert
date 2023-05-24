@@ -173,7 +173,7 @@ const getWetransferPageContent = async function (endpoint = wetransferEndpoint, 
     const htmlPage = await result.text()
     const sessionCookie = result.headers.raw()['set-cookie'].filter(cookie => cookie.includes('session'))[0]
     const $ = cheerio.load(htmlPage)
-    const csrf = $("meta[name=csrf-token]").attr('content').trim()
+    const csrf = $("meta[name=csrf-token]").attr('content')
 
     return {
         htmlPage,
