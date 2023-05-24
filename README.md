@@ -10,6 +10,8 @@
 
 ## Changelog
 
+- 2.3.10
+  - Merge #36 Remove csrf trim
 - 2.3.9
   - Fix minor security issue that allows fake wetransfer domains #33
 - 2.3.7 / 2.3.8
