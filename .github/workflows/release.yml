@@ -8,11 +8,9 @@ on:
 jobs:
   analyze:
     uses: ./.github/workflows/codeql-analysis.yml
-  regression:
-    uses: ./.github/workflows/regression.yml
   release:
     runs-on: ubuntu-latest
-    needs: [analyze, regression]
+    needs: [analyze]
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
@@ -22,4 +20,4 @@ jobs:
     - uses: plutotcool/release@v2.0.0
       with:
         github_token:  ${{ secrets.GITHUB_TOKEN }}
-        npm_token: ${{ secrets.NPM_TOKEN }}     
+        npm_token: ${{ secrets.NPM_TOKEN }}

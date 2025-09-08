@@ -492,7 +492,7 @@ class Upload extends EventEmitter {
                     },
                     meta: { filefield: 'file' }
                 }
-            } 
+            }
         */
 
         const endpoint = template.template.formdata.action
@@ -545,6 +545,11 @@ class Upload extends EventEmitter {
     cancel() { return this.emit('cancel') }
 }
 
+/**
+ * No longer working
+ * @deprecated
+ *
+ */
 exports.upload = function (mailFrom, mailRecipients, payloads, message, ui_language, user, password) {
     if (!(this instanceof Upload)) return new Upload(mailFrom, mailRecipients, payloads, message, ui_language, user, password)
 }

@@ -4,7 +4,7 @@ const { upload, Payload, isValidWetransfertUrl, getInfo, waitForDownloadable } =
 
 // The body of the email
 const body = 'Hi this is an upload from https://github.com/orgrimarr/node-wetransfert API'
-// Language, used in the weetranfer download ux : ex: en, fr
+// Language, used in the wetranfer download ux : ex: en, fr
 const language = 'en'
 
 // Samples
@@ -35,12 +35,12 @@ const testSamples = () => {
 
 const bigFile = path.resolve(__dirname, './ressources/big/BigBuckBunny.mp4')
 
-describe('2) Upload', function () {
+describe.skip('2) Upload', function () {
     describe('simple', function () {
         it('should upload an image', function () {
             return new Promise((resolve, reject) => {
                 try {
-                    upload('', '', testSamples()[0], body, language)
+                    upload('', '', testSamples()[0], body, language, 'wetransfer@orgrimarr.fr', 'np0`nNAl\\B&CQ,r@ihQW')
                         // .on('progress', (progress) => console.error('PROGRESS', progress))
                         .on('end', (end) => {
                             return resolve(end)
@@ -88,7 +88,7 @@ describe('2) Upload', function () {
                         .on('end', (end) => {
                             waitForDownloadable(end)
                                 .then(() => getInfo(end.shortened_url))
-                                .then(res => {  
+                                .then(res => {
                                     if (!res.downloadURI) {
                                         return reject(new Error(`Error uploading, the transfer has no downloadURI ${res.downloadURI}`))
                                     }
@@ -190,5 +190,5 @@ describe('2) Upload', function () {
 
     })
 
-    run()
+    // run()
 })

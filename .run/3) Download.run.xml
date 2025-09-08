@@ -1,0 +1,17 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="3) Download" type="mocha-javascript-test-runner" nameIsGenerated="true">
+    <node-interpreter>project</node-interpreter>
+    <node-options />
+    <mocha-package>$PROJECT_DIR$/node_modules/mocha</mocha-package>
+    <working-directory>$PROJECT_DIR$</working-directory>
+    <pass-parent-env>true</pass-parent-env>
+    <ui>bdd</ui>
+    <extra-mocha-options>--timeout 30000</extra-mocha-options>
+    <test-kind>SUITE</test-kind>
+    <test-file>$PROJECT_DIR$/test/download.js</test-file>
+    <test-names>
+      <name value="3) Download" />
+    </test-names>
+    <method v="2" />
+  </configuration>
+</component>

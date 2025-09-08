@@ -1,7 +1,6 @@
 const urlUtils = require('url')
 const fetch = require('node-fetch')
 const debug = require('debug')('wetransfert:utils')
-const cheerio = require('cheerio')
 const HttpsProxyAgent = require('https-proxy-agent')
 const https = require('https')
 
@@ -69,7 +68,7 @@ exports.formatDownloadApiUri = async function (urlObj, fileId) {
         wetransferUrl.hostname = wetransferDomain
     }
 
-    // Short link 
+    // Short link
     if (weTransfertRegexShort.exec(wetransferUrl.href) !== null) {
         debug("formatDownloadApiUri: short_url", urlObj.pathname.split('/'))
         const resp = await expandUrl(urlObj.href)
@@ -150,39 +149,49 @@ exports.waitAsync = function (time, data) {
     })
 }
 
+
+/**
+ * No longer working
+ * @deprecated
+ */
 const getWetransferPageContent = async function (endpoint = wetransferEndpoint, cookies) {
-    debug(`getWetransferPageContent: GET ${endpoint}`)
-    if (typeof endpoint === 'object') {
-        endpoint = urlUtils.format(endpoint)
-    }
-
-    const options = {
-        agent: getHttpAgent()
-    }
-    if (cookies) {
-        options.headers = {
-            'cookie': cookies,
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36'
-        }
-    }
-    const result = await fetch(endpoint, options)
-    if (result.status !== 200) {
-        debug(await result.text())
-        throw new Error(`Error GET ${endpoint} server respond with status ${result.status} ${result.statusText}`)
-    }
-    const htmlPage = await result.text()
-    const sessionCookie = result.headers.raw()['set-cookie'].filter(cookie => cookie.includes('session'))[0]
-    const $ = cheerio.load(htmlPage)
-    const csrf = $("meta[name=csrf-token]").attr('content')
-
-    return {
-        htmlPage,
-        sessionCookie,
-        csrf
-    }
+    return {}
+    // debug(`getWetransferPageContent: GET ${endpoint}`)
+    // if (typeof endpoint === 'object') {
+    //     endpoint = urlUtils.format(endpoint)
+    // }
+    //
+    // const options = {
+    //     agent: getHttpAgent()
+    // }
+    // if (cookies) {
+    //     options.headers = {
+    //         'cookie': cookies,
+    //         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36'
+    //     }
+    // }
+    // const result = await fetch(endpoint, options)
+    // if (result.status !== 200) {
+    //     debug(await result.text())
+    //     throw new Error(`Error GET ${endpoint} server respond with status ${result.status} ${result.statusText}`)
+    // }
+    // const htmlPage = await result.text()
+    // const sessionCookie = result.headers.raw()?.['set-cookie']?.filter(cookie => cookie.includes('session'))?.[0] ?? ''
+    // const $ = cheerio.load(htmlPage)
+    // const csrf = $("meta[name=csrf-token]").attr('content')
+    //
+    // return {
+    //     htmlPage,
+    //     sessionCookie,
+    //     csrf
+    // }
 }
 exports.getWetransferPageContent = getWetransferPageContent
 
+/**
+ * No longer working
+ * @deprecated
+ */
 exports.getContentSecurity = async function (urlObj) {
     debug(`getContentInfo: GET ${urlObj.href}`)
     const { sessionCookie, csrf } = await getWetransferPageContent(urlObj.href)
@@ -194,6 +203,10 @@ exports.getContentSecurity = async function (urlObj) {
     }
 }
 
+/**
+ * No longer working
+ * @deprecated
+ */
 exports.login = async function (user, password) {
     debug(`Login ${user}`)
     const endpoint = `https://wetransfer.com/api/${apiVersion}/auth/session`

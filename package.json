@@ -1,6 +1,6 @@
 {
   "name": "wetransfert",
-  "version": "2.3.10",
+  "version": "2.4.0",
   "description": "Download/Upload wetransfer content with nodeJS - Unofficial API for wetransfer",
   "keywords": [
     "file transfer",
@@ -8,7 +8,6 @@
     "wetransfer",
     "transfert",
     "download",
-    "upload",
     "API",
     "api"
   ],
@@ -28,17 +27,15 @@
   "dependencies": {
     "@snyk/protect": "^1.836.0",
     "abort-controller": "^3.0.0",
-    "cheerio": "^1.0.0-rc.5",
     "debug": "^4.3.1",
     "form-data": "^3.0.1",
     "https-proxy-agent": "^5.0.0",
     "node-fetch": "2",
     "p-map": "^1.2.0",
-    "unzipper": "^0.9.15"
+    "unzipper": "^0.12.3"
   },
   "devDependencies": {
-    "mocha": "^9.1.1",
-    "rimraf": "^3.0.2"
+    "mocha": "^9.1.1"
   },
   "snyk": true
 }

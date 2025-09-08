@@ -2,7 +2,6 @@ const { getInfo }       = require('./getInfo')
 const PProgress         = require('../utils/PProgress')
 const fetch             = require('node-fetch')
 const debug             = require('debug')("wetransfert:download")
-const mkdirp            = require('mkdirp')
 const unzip             = require('unzipper')
 const path              = require('path')
 const fs                = require('fs')
@@ -28,7 +27,7 @@ exports.download = function (url = '', destPath = null, fileIds = null) {
             }
 
             if (!fs.existsSync(destPath)) {
-                await mkdirp(destPath)
+                await fs.promises.mkdir(destPath, { recursive: true })
             }
 
             const destinationStream = weTransfertObject.content.items.length >= 2 || (Array.isArray(fileIds) && fileIds.length >= 2)

@@ -1,6 +1,6 @@
 # [node-wetransfert](https://github.com/orgrimarr/node-wetransfert)
 
-## Download/Upload [wetransfer](https://wetransfer.com/) content with nodeJS ! - Unofficial API for wetransfer
+## Download [wetransfer](https://wetransfer.com/) content with nodeJS ! - Unofficial API for wetransfer
 
 [![Known Vulnerabilities](https://snyk.io/test/github/orgrimarr/node-wetransfert/badge.svg)](https://snyk.io/test/github/orgrimarr/node-wetransfert)
 
@@ -10,6 +10,9 @@
 
 ## Changelog
 
+- 2.4.0
+  - Fix download
+  - Login/Download no longer working
 - 2.3.10
   - Merge #36 Remove csrf trim
 - 2.3.9
@@ -63,11 +66,6 @@
 - [Get infos](#isValidWetransfertUrl)
   - [Validate url](#isValidWetransfertUrl)
   - [Get url detail](#Get-information-about-weTransfert-url)
-- [Upload](#Upload)
-  - [Using payload wrapper](#Payload-Example)
-  - [Progress object](#Progress-object)
-  - [End object](#End-object)
-  - [Get share link](#Upload-without-email)
 - [Known Bugs](#Known-Bugs)
 
 ## Install
@@ -78,7 +76,7 @@ or
 yarn add wetransfert
 ```
 
-Tested in node 12.x
+Tested in node 18.x
 
 ### You can require the module like this
 
@@ -237,180 +235,10 @@ getInfo('myWeTransfertURL')
 }
 ```
 
-## Upload
-
-You can upload a total file size >= 2Gibibyte (2147483648 Byte)
-
-upload('mailSender', ['receiverMail'], ['file1'], 'myMessage', 'ui_language', username, password)
-
-**/!\ Wetransfer upload (send email) is no longer possible without a wetransfer account.** Wetransfer add a captcha so i can't script the upload. You can specify yout wetransfer username/password to the upload function
-
-The upload function parameters :
-
-- mailSender: A valid mail address of the sender
-- receiverMail: An array of valid destination addreEnd objectansfer
-- myMessage: The message you want to send
-- ui_language: The language of the wetransfer receiver. ex: en, fr
-- username: Your wetransfer account username. /!\ username and mailSender email must be the same
-- password: Your wetransfer account password
-
-The upload function expose an event emitter and will trigger 3 event :
-
-- progress: Represent the state of the upload
-- end: It wil be triggered when the upload end with success.
-- error: Il will be triggered on error, the transfer is canceled after an error
-
-### Example
-
-``` javascript
-    const myUpload = upload('mailSender@gmail.com', ['receive1@gmail.com', 'receive2@gmail.com'], ['D:/Video/MEDIA150212142309947screen.mp4', 'C:/Users/pc/Desktop/toto2.txt', 'C:/Users/pc/Desktop/tata.txt'], 'Hello World', 'en', 'username', 'password')
-    .on('progress', (progress) => console.log('PROGRESS', progress))
-    .on('end', (end) => console.log('END', end))
-    .on('error', (error) => console.error('ERROR', error));
-
-    setTimeout(function(){
-        myUpload.cancel();
-    }, 10000);
-```
-
-## Payload Example
-
-``` javascript
-    const toUpload = [
-        path.resolve(__dirname, './ressources/flower-3876195_960_720.jpg'),   // Upload a file from path
-        path.resolve(__dirname, './ressources/landscape-3779159_960_720.jpg'),
-        path.resolve(__dirname, './ressources/gnu.txt'),
-        {   // Upload a buffer
-            name: "test buffer",
-            buffer: Buffer.from("THIS IS A TEST BUFFER")
-        },
-        {   // upload a stream
-            name: "test stream from file",
-            stream: fs.createReadStream(path.resolve(__dirname, './ressources/water-lily-3784022_960_720.jpg')),
-            size: fs.statSync(path.resolve(__dirname, './ressources/water-lily-3784022_960_720.jpg')).size
-        }
-    ]
-
-    const myUpload = upload('', '', toUpload, 'Hello World', 'en')
-    .on('progress', (progress) => console.log('PROGRESS', progress))
-    .on('end', (end) => console.log('END', end))
-    .on('error', (error) => console.error('ERROR', error));
-
-    setTimeout(function(){
-        myUpload.cancel();
-    }, 10000);
-```
-
-## Upload using node-wetransfer Payload Wrapper
-
-``` javascript
-    const Payload = require('wetransfert').Payload
-
-    const toUpload = [
-        new Payload({filePath: path.resolve(__dirname, './ressources/flower-3876195_960_720.jpg')}),
-        new Payload({filePath: path.resolve(__dirname, './ressources/landscape-3779159_960_720.jpg')}),
-        new Payload({
-          filePath: path.resolve(__dirname, './ressources/gnu.txt'),
-          name: "gnu_renamed.txt" // Overide file name
-        }),
-        new Payload({   // Upload a buffer
-            name: "test buffer",
-            buffer: Buffer.from("THIS IS A TEST BUFFER")
-        }),
-        new Payload({   // upload a stream
-            name: "test stream from file",
-            stream: fs.createReadStream(path.resolve(__dirname, './ressources/water-lily-3784022_960_720.jpg')),
-            size: fs.statSync(path.resolve(__dirname, './ressources/water-lily-3784022_960_720.jpg')).size
-        })
-    ]
-
-    const myUpload = upload('', '', toUpload, 'Hello World', 'en')
-    .on('progress', (progress) => console.log('PROGRESS', progress))
-    .on('end', (end) => console.log('END', end))
-    .on('error', (error) => console.error('ERROR', error));
-
-    setTimeout(function(){
-        myUpload.cancel();
-    }, 10000);
-```
-
-> /!\ If you want tu upload from a Stream you must provide le steam length. It is mandatory from wetransfer
-
-## Progress object
-
-``` json
-{
-  "percent": 0.5,                
-  "speed": 554732,               
-  "size": {
-      "total": 90044871,        
-      "transferred": 27610959    
-  },
-  "time": {
-      "elapsed": 36.235,        
-      "remaining": 81.403       
-  }        
-}
-```
-
-- percent: Overall percentage (between 0 to 1)
-- speed: The upload speed in bytes/sec
-- total: The total payload size in bytes
-- transferred: The transferred payload size in bytes
-- elapsed: The total elapsed seconds since the start (3 decimals)
-- remaining: The remaining seconds to finish (3 decimals)
-
-## End object
-
-``` json
-{
-    "id": "f657a4d4dfda8285b871c268621e70ac20190105125429",
-    "state": "downloadable",
-    "transfer_type": 4,
-    "shortened_url": "https://we.tl/t-332ONV4tUJ",
-    "expires_at": "2019-01-12T12:54:36Z",
-    "password_protected": false,
-    "uploaded_at": "2019-01-05T12:54:36Z",
-    "expiry_in_seconds": 604792,
-    "size": 462915,
-    "deleted_at": null,
-    "recipient_id": null,
-    "security_hash": "86876f",
-    "description": "Hi this is an upload from https://github.com/orgrimarr/node-wetransfert API",
-    "items": [{
-            "id": "aa05a51ab020f28d95aadd21031f63c020190105125429",
-            "name": "flower-3876195_960_720.jpg",
-            "retries": 0,
-            "size": 147377,
-            "previewable": true,
-            "content_identifier": "file"
-        },
-        ...
-    ]
-}
-```
-
-## Upload without email
-
-If mailSender and receiverMail is equal '', you can upload files without send email.
-Remember do not forget get URL in "end" object.
-
-With this mode you dont need a wetransfer account
-
-[End Object](#response-example)
-
-## To do
-
-- improve error handling
-- provide pip option for download/upload function
-
 ## Known Bugs
 
-- none at this time
-
-Don't hesitate to give your feedback on github and let me know of any bug you might encounter
-
-if you have any issue please use the debug mode before open an issue
+- Upload
+- Login
 
 ``` javascript
 // Juste add the begining of your script

@@ -9,7 +9,7 @@ const getDownloadUri = async function (urlObj, sessionCookie, csrf, fileIds) {
     debug(`getDownloadUri: POST ${requestParams.uri}  ${JSON.stringify(requestParams.body)}`)
     debug('getDownloadUri sessionCookie', sessionCookie)
     debug('getDownloadUri csrf', csrf)
-    
+
 //    https://wetransfer.com/api/v4/transfers/c6b70cd24d856cabc2a07fc809f7316a20210331133453/prepare-download
 
     const result = await fetch(requestParams.uri, {
@@ -37,7 +37,7 @@ const getDownloadUri = async function (urlObj, sessionCookie, csrf, fileIds) {
     }
 
     const data = await result.json()
-    
+
     return data.direct_link
 }
 
@@ -72,7 +72,7 @@ const getContentInfos = async function(urlObj, sessionCookie, csrf) {
         },
         agent: getHttpAgent()
     })
-    //debug('getDownloadUri prepare-download', await result.text());
+    // debug('getDownloadUri prepare-download', await result.text());
     return await result.json();
 }
 const getInfo = async function (url, fileIds) {
@@ -80,15 +80,15 @@ const getInfo = async function (url, fileIds) {
         const URLObject = isValidWetransfertUrl(url)
         if (URLObject) {
             debug("URLObject", URLObject);
-            const security = await getContentSecurity(URLObject)
-            debug("security", security);
-            const infos = await getContentInfos(URLObject, security.sessionCookie, security.csrf)
-            debug("infos", infos);
+            const infos = await getContentInfos(URLObject)
+            if(!infos.state) {
+                throw new Error(infos.message ?? 'Error getting state')
+            }
             // Cannot get downloadURI if state !== downloadable
             if (infos.state !== "downloadable") {
                 return formatResult([infos, null])
             }
-            const downloadURI = await getDownloadUri(URLObject, security.sessionCookie, security.csrf, fileIds)
+            const downloadURI = await getDownloadUri(URLObject, undefined, undefined, fileIds)
             debug("downloadURI", downloadURI)
             return formatResult([infos, downloadURI])
         }
